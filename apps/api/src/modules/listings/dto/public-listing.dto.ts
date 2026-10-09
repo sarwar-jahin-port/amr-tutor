@@ -1,11 +1,25 @@
-import type { ListingStatus, TeachingMode, Weekday } from '@prisma/client';
+import type { ListingStatus, Prisma, TeachingMode, Weekday } from '@prisma/client';
+
+/**
+ * The relations every listing response (public or the owner's own view)
+ * needs. Shared so the public search/detail endpoints (Phase 5) and the
+ * authenticated "me" endpoints (Phase 7) stay in sync by construction.
+ */
+export const LISTING_INCLUDE = {
+  curriculum: { select: { id: true, name: true } },
+  subjects: { include: { subject: { select: { id: true, name: true } } } },
+  universityPreferences: { include: { university: { select: { id: true, name: true } } } },
+  schedules: { select: { day: true, startMinute: true, endMinute: true } },
+} satisfies Prisma.TuitionListingInclude;
 
 /**
  * Public-safe tuition-listing shapes. Deliberately excludes guardianUserId
  * — the guardian's identity is never exposed in a public listing (contact
  * happens only through the consent-based sharing flow, a later phase).
  * Never serialize a raw Prisma TuitionListing (blueprint Phase 5: "Return
- * only public response DTOs").
+ * only public response DTOs"). The owner's own view (Phase 7) reuses the
+ * same shape plus its own id is already in scope; there's no extra field
+ * worth hiding from the owner that we'd otherwise show the public.
  */
 export interface PublicListingSummaryDto {
   id: string;

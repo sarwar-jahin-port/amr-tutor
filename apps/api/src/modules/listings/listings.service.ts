@@ -4,18 +4,12 @@ import { PaginatedResponse, paginate } from '../../common/dto/pagination-query.d
 import { PrismaService } from '../../database/prisma.service';
 import { ListingSearchQueryDto, ListingSortOption } from './dto/listing-search-query.dto';
 import {
+  LISTING_INCLUDE,
   PublicListingDetailDto,
   PublicListingSummaryDto,
   toPublicListingDetailDto,
   toPublicListingSummaryDto,
 } from './dto/public-listing.dto';
-
-const PUBLIC_INCLUDE = {
-  curriculum: { select: { id: true, name: true } },
-  subjects: { include: { subject: { select: { id: true, name: true } } } },
-  universityPreferences: { include: { university: { select: { id: true, name: true } } } },
-  schedules: { select: { day: true, startMinute: true, endMinute: true } },
-} satisfies Prisma.TuitionListingInclude;
 
 const SORT_ORDER_BY: Record<ListingSortOption, Prisma.TuitionListingOrderByWithRelationInput> = {
   newest: { publishedAt: 'desc' },
@@ -33,7 +27,7 @@ export class ListingsService {
     const [rows, total] = await Promise.all([
       this.prisma.tuitionListing.findMany({
         where,
-        include: PUBLIC_INCLUDE,
+        include: LISTING_INCLUDE,
         orderBy: SORT_ORDER_BY[query.sort],
         skip: (query.page - 1) * query.limit,
         take: query.limit,
@@ -47,7 +41,7 @@ export class ListingsService {
   async findPublicById(id: string): Promise<PublicListingDetailDto> {
     const listing = await this.prisma.tuitionListing.findFirst({
       where: { id, status: 'PUBLISHED' },
-      include: PUBLIC_INCLUDE,
+      include: LISTING_INCLUDE,
     });
 
     if (!listing) {

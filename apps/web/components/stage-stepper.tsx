@@ -6,6 +6,7 @@ export interface StageStepperStep {
   label: string;
 }
 
+/** Clickable step indicator shared by every guided wizard (tutor onboarding, listing creation, ...). */
 export function StageStepper({
   steps,
   current,

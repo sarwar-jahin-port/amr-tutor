@@ -3,47 +3,10 @@
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Checkbox, CheckboxLabel } from '@/components/ui/checkbox';
+import { CheckboxGrid } from '@/components/checkbox-grid';
 import type { ReferenceItem } from '@/features/marketplace/types';
 import { replaceCurricula, replaceGrades, replaceSubjects } from '@/features/tutor-profile/api';
 import type { TutorProfile } from '@/features/tutor-profile/types';
-
-function toggle(list: string[], id: string): string[] {
-  return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
-}
-
-function CheckboxGrid({
-  legend,
-  options,
-  selected,
-  onChange,
-}: {
-  legend: string;
-  options: ReferenceItem[];
-  selected: string[];
-  onChange: (next: string[]) => void;
-}) {
-  return (
-    <fieldset className="flex flex-col gap-3">
-      <legend className="text-sm font-medium text-ink">{legend}</legend>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {options.map((option) => {
-          const id = `${legend}-${option.id}`;
-          return (
-            <div key={option.id} className="flex items-center gap-2">
-              <Checkbox
-                id={id}
-                checked={selected.includes(option.id)}
-                onCheckedChange={() => onChange(toggle(selected, option.id))}
-              />
-              <CheckboxLabel htmlFor={id}>{option.name}</CheckboxLabel>
-            </div>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
 
 export function TeachingStage({
   profile,

@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/features/auth/auth-context';
+import { getOwnGuardianProfile } from '@/features/guardian-profile/api';
+import type { GuardianProfile } from '@/features/guardian-profile/types';
+import { closeListing, getMyListings } from '@/features/listing-owner/api';
+import type { ListingDetail } from '@/features/listing-owner/types';
 import { getOwnTutorProfile } from '@/features/tutor-profile/api';
 import type { TutorProfile } from '@/features/tutor-profile/types';
 
@@ -81,6 +85,147 @@ function TutorProfileCard() {
   );
 }
 
+const LISTING_STATUS_LABEL: Record<string, string> = {
+  DRAFT: 'Draft',
+  PENDING_REVIEW: 'Pending review',
+  PUBLISHED: 'Published',
+  PAUSED: 'Paused',
+  FILLED: 'Filled',
+  CLOSED: 'Closed',
+  REJECTED: 'Rejected',
+  EXPIRED: 'Expired',
+};
+
+const LISTING_STATUS_BADGE: Record<string, 'neutral' | 'success' | 'information' | 'warning' | 'danger'> = {
+  DRAFT: 'neutral',
+  PENDING_REVIEW: 'information',
+  PUBLISHED: 'success',
+  PAUSED: 'warning',
+  FILLED: 'information',
+  CLOSED: 'neutral',
+  REJECTED: 'danger',
+  EXPIRED: 'neutral',
+};
+
+function ListingRow({ listing, onClosed }: { listing: ListingDetail; onClosed: (updated: ListingDetail) => void }) {
+  const [isClosing, setIsClosing] = useState(false);
+  const canEdit = listing.status !== 'CLOSED';
+  const canClose = listing.status !== 'CLOSED';
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-canvas p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-1">
+        <p className="font-medium text-ink">{listing.title}</p>
+        <div className="flex items-center gap-2">
+          <Badge variant={LISTING_STATUS_BADGE[listing.status]}>{LISTING_STATUS_LABEL[listing.status]}</Badge>
+          <span className="text-sm text-ink-secondary">
+            {listing.area}, {listing.city}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {canEdit && (
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/listings/${listing.id}/edit`}>Edit</Link>
+          </Button>
+        )}
+        {listing.status === 'PUBLISHED' && (
+          <Button asChild variant="tertiary" size="sm">
+            <Link href={`/tuition/${listing.id}`} target="_blank">
+              View
+            </Link>
+          </Button>
+        )}
+        {canClose && (
+          <Button
+            variant="tertiary"
+            size="sm"
+            isLoading={isClosing}
+            onClick={async () => {
+              setIsClosing(true);
+              try {
+                onClosed(await closeListing(listing.id));
+              } finally {
+                setIsClosing(false);
+              }
+            }}
+          >
+            Close
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GuardianListingsCard() {
+  const [profile, setProfile] = useState<GuardianProfile | null | undefined>(undefined);
+  const [listings, setListings] = useState<ListingDetail[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getOwnGuardianProfile().then((result) => {
+      if (cancelled) return;
+      setProfile(result);
+      if (result) {
+        getMyListings().then((rows) => {
+          if (!cancelled) setListings(rows);
+        });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (profile === undefined) {
+    return <Skeleton className="h-28 w-full rounded-2xl" />;
+  }
+
+  if (profile === null) {
+    return (
+      <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-border bg-surface p-5">
+        <p className="font-semibold text-ink">Set up your guardian profile</p>
+        <p className="text-sm text-ink-secondary">
+          Add your name so tutors know who they&apos;re applying to before you publish a listing.
+        </p>
+        <Button asChild className="self-start">
+          <Link href="/onboarding/guardian">Set up profile</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-semibold text-ink">Your tuition listings</p>
+        <Button asChild variant="secondary" size="sm">
+          <Link href="/listings/new">Publish a listing</Link>
+        </Button>
+      </div>
+
+      {listings.length === 0 ? (
+        <p className="text-sm text-ink-secondary">
+          You haven&apos;t published a tuition listing yet. Create one to start hearing from tutors.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {listings.map((listing) => (
+            <ListingRow
+              key={listing.id}
+              listing={listing}
+              onClosed={(updated) =>
+                setListings((rows) => rows.map((l) => (l.id === updated.id ? updated : l)))
+              }
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { status, user, logout } = useAuth();
   const router = useRouter();
@@ -131,11 +276,7 @@ export default function DashboardPage() {
 
       {user.roles.includes('TUTOR') && <TutorProfileCard />}
 
-      {user.roles.includes('GUARDIAN') && (
-        <p className="text-sm text-ink-secondary">
-          Publishing a tuition listing as a guardian arrives in a later phase.
-        </p>
-      )}
+      {user.roles.includes('GUARDIAN') && <GuardianListingsCard />}
 
       <Button variant="secondary" className="self-start" onClick={() => void logout()}>
         Log out

@@ -8,7 +8,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import type { Division, ReferenceItem } from '@/features/marketplace/types';
 import { getOwnTutorProfile } from '@/features/tutor-profile/api';
 import type { TutorProfile } from '@/features/tutor-profile/types';
-import { StageStepper } from './stage-stepper';
+import { StageStepper } from '@/components/stage-stepper';
 import { AcademicStage } from './stages/academic-stage';
 import { AvailabilityStage } from './stages/availability-stage';
 import { ExperienceStage } from './stages/experience-stage';

@@ -182,6 +182,8 @@ model User {
 
   auditLogs AuditLog[] @relation("AuditActor")
 
+  refreshTokens RefreshToken[]
+
   @@index([status])
   @@index([createdAt])
 }
@@ -208,6 +210,36 @@ model GuardianProfile {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// RefreshToken is not part of docs/database_schema_and_prisma_models.md (that
+// doc covers marketplace domain data); it exists to satisfy the Phase 3/TRD
+// requirement for revocable, rotated refresh sessions. The raw opaque token
+// is never stored — only a deterministic SHA-256 digest, so a presented
+// token can be looked up by equality without needing a slow password-style
+// hash (the token itself is high-entropy random data, not a low-entropy
+// user secret).
+model RefreshToken {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  tokenHash String @unique
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  // Set when this token was consumed by a refresh call, pointing at the
+  // token issued in its place. Lets us detect reuse of an already-rotated
+  // token (a strong signal of theft) and revoke the whole session chain.
+  replacedByTokenId String? @db.Uuid
+
+  userAgent String?
+  ipAddress String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
 }
 
 // ---------------------------------------------------------------------------

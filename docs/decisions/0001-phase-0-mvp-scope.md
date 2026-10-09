@@ -130,3 +130,16 @@ No separate diagram file is created in Phase 0; each journey's states are implem
 - [x] Moderation policy for publish confirmed (§3 item 10) — mandatory admin pre-publish review
 
 All Phase 0 items are resolved. Phase 1 (repository + dev environment) can start.
+
+---
+
+## 10. Phase 3 scoping decisions (2026-10-09)
+
+Two gaps surfaced between `docs/api_spec.md`'s illustrative DTOs and what Phase 0–2 had already settled. Both were confirmed directly rather than assumed:
+
+| # | Decision | Final answer | Rationale |
+|---|----------|--------------|-----------|
+| 17 | Registration's `fullName` field | **Dropped.** `POST /auth/register` takes only `email`, `phone?`, `password`, `roles`. A user's display name is captured later, when they create a `TutorProfile` (`fullName`) or `GuardianProfile` (`displayName`) in Phase 6/7. | The Phase 2 `User` model deliberately has no name field — per its own doc, identity/auth and display-name data are different categories. `api_spec.md`'s example DTO included `fullName` inconsistently with the schema it's supposed to sit on top of; the schema wins per the blueprint's document hierarchy (§3). |
+| 18 | Password reset / email-phone verification | **Deferred entirely.** `POST /auth/password/forgot`, `POST /auth/password/reset`, `POST /auth/verify-phone` from `api_spec.md` are not implemented in Phase 3. `User.emailVerifiedAt`/`phoneVerifiedAt` remain columns with no write path yet. | Blueprint §9.2 makes these conditional on launch requirements, and Phase 0's decision table never named them as required. They need a chosen email/SMS provider, which doesn't exist yet in this repo. Half-building a security-sensitive flow without that infrastructure is worse than not building it; revisit once a provider is chosen. |
+
+Everything else Phase 3 needed beyond `api_spec.md` and the Phase 2 schema — a `RefreshToken` model for rotation/revocation, and the choice of argon2 + JWT access tokens + an HttpOnly rotated refresh cookie — follows directly from the blueprint's and TRD's own authentication requirements (§9, TRD §3.1) and is documented in the Phase 3 commit rather than repeated here.

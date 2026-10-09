@@ -8,3 +8,4 @@ onlyBuiltDependencies:
   - esbuild
   - '@parcel/watcher'
   - unrs-resolver
+  - argon2

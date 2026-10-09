@@ -6,7 +6,7 @@ See [`docs/master_implementation_blueprint.md`](docs/master_implementation_bluep
 
 ## Status
 
-**Phase 2 — Database and reference data.** The full data model (users, tutor/guardian profiles, listings, applications, messaging, verification, reports, consent, audit) is implemented and migrated. Authentication (Phase 3) and every product-facing feature/endpoint are not implemented yet — the schema exists, but nothing can be created through the API besides the health check.
+**Phase 3 — Authentication and authorization.** Registration, login, token refresh/rotation, logout, and self-service role management work end to end (API + web UI), with role- and status-based authorization guards protecting every route by default. Password reset and email/phone verification are explicitly deferred (see decision record 0001 §10) pending an email/SMS provider choice. Every other product feature (profiles, listings, applications, messaging, ...) is still unimplemented.
 
 ## Stack
 
@@ -56,6 +56,15 @@ pnpm run dev
 The homepage calls the API's health endpoint server-side and shows whether it's reachable — a quick way to confirm both apps are wired together correctly.
 
 > **Note on the Prisma client:** `pnpm install` regenerates it automatically (`postinstall` → `db:generate`). If you ever see a "Cannot find module '.prisma/client'" error after an install, just re-run `pnpm run db:generate`.
+
+## Auth
+
+Implemented under `/api/v1/auth` and `/api/v1/users`:
+
+- `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`
+- `PATCH /users/me` (phone only), `POST /users/me/roles`, `DELETE /users/me/roles/:role`
+
+A user may self-register as `TUTOR` and/or `GUARDIAN` only — administrative roles are never self-assignable. Access tokens are short-lived JWTs kept in memory on the client; refresh tokens are opaque, rotated on every use, delivered as an HttpOnly cookie, and the whole session chain is revoked if an already-rotated token is ever replayed. See `apps/web/features/auth/` for the client-side session handling and `apps/api/src/modules/auth/` for the server implementation.
 
 ## Scripts (run from the repo root)
 

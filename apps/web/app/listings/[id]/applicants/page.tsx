@@ -16,6 +16,7 @@ import { APPLICATION_STATUS_BADGE, APPLICATION_STATUS_LABEL } from '@/features/a
 import type { ApplicationDetail, OwnerSettableStatus } from '@/features/applications/types';
 import { getMyListing } from '@/features/listing-owner/api';
 import type { ListingDetail } from '@/features/listing-owner/types';
+import { createConversation } from '@/features/messaging/api';
 import { AuthedApiError } from '@/lib/authed-api';
 
 const ACADEMIC_STATUS_LABEL: Record<string, string> = {
@@ -24,6 +25,9 @@ const ACADEMIC_STATUS_LABEL: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/** Messaging opens once the owner has shown interest (decision record §4.2 state chain). */
+const MESSAGEABLE_STATUSES = new Set(['SHORTLISTED', 'CONTACT_REQUESTED', 'ACCEPTED']);
+
 function ApplicantCard({
   application,
   onUpdated,
@@ -31,7 +35,9 @@ function ApplicantCard({
   application: ApplicationDetail;
   onUpdated: (updated: ApplicationDetail) => void;
 }) {
+  const router = useRouter();
   const [pendingAction, setPendingAction] = useState<OwnerSettableStatus | null>(null);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
 
   async function handleTransition(target: OwnerSettableStatus) {
     setPendingAction(target);
@@ -45,8 +51,27 @@ function ApplicantCard({
     }
   }
 
-  const canShortlistOrDecline = application.status === 'SUBMITTED' || application.status === 'VIEWED';
-  const canAccept = application.status === 'SHORTLISTED';
+  async function handleMessage() {
+    setIsOpeningChat(true);
+    try {
+      const conversation = await createConversation(application.id);
+      router.push(`/messages/${conversation.id}`);
+    } catch (error) {
+      const message = error instanceof AuthedApiError ? error.message : 'Something went wrong. Please try again.';
+      toast({ title: "Couldn't open the conversation", description: message, variant: 'danger' });
+      setIsOpeningChat(false);
+    }
+  }
+
+  // ACCEPTED is only reachable from CONTACT_REQUESTED — the contact-sharing
+  // step in /messages starts that transition, not this status button
+  // (decision record §4.2: SUBMITTED -> VIEWED -> SHORTLISTED ->
+  // CONTACT_REQUESTED -> ACCEPTED).
+  const canShortlist = application.status === 'SUBMITTED' || application.status === 'VIEWED';
+  const canDecline =
+    application.status === 'SUBMITTED' || application.status === 'VIEWED' || application.status === 'SHORTLISTED';
+  const canAccept = application.status === 'CONTACT_REQUESTED';
+  const canMessage = MESSAGEABLE_STATUSES.has(application.status);
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
@@ -82,9 +107,14 @@ function ApplicantCard({
         <p className="whitespace-pre-line text-sm text-ink-secondary">{application.introduction}</p>
       )}
 
-      {(canShortlistOrDecline || canAccept) && (
+      {(canShortlist || canAccept || canDecline || canMessage) && (
         <div className="flex flex-wrap gap-2 border-t border-border pt-3">
-          {canShortlistOrDecline && (
+          {canMessage && (
+            <Button variant="secondary" size="sm" isLoading={isOpeningChat} onClick={() => void handleMessage()}>
+              Message
+            </Button>
+          )}
+          {canShortlist && (
             <Button
               variant="secondary"
               size="sm"
@@ -105,15 +135,17 @@ function ApplicantCard({
               Accept
             </Button>
           )}
-          <Button
-            variant="tertiary"
-            size="sm"
-            isLoading={pendingAction === 'DECLINED'}
-            disabled={pendingAction !== null}
-            onClick={() => void handleTransition('DECLINED')}
-          >
-            Decline
-          </Button>
+          {canDecline && (
+            <Button
+              variant="tertiary"
+              size="sm"
+              isLoading={pendingAction === 'DECLINED'}
+              disabled={pendingAction !== null}
+              onClick={() => void handleTransition('DECLINED')}
+            >
+              Decline
+            </Button>
+          )}
         </div>
       )}
     </div>

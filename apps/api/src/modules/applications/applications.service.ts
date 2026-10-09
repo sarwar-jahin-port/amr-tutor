@@ -1,36 +1,46 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ApplicationStatus, NotificationType, Prisma } from '@prisma/client';
+import { ApplicationStatus, Prisma } from '@prisma/client';
 import { PaginatedResponse, PaginationQueryDto, paginate } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { APPLICATION_INCLUDE, ApplicationDetailDto, toApplicationDetailDto } from './dto/application.dto';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 
 /**
  * Statuses the listing owner may move an application INTO, keyed by its
- * current status (blueprint Phase 8 state machine). Every status missing
- * from this map (ACCEPTED, DECLINED, WITHDRAWN, CLOSED, CONTACT_REQUESTED)
- * is terminal from the owner's side — CONTACT_REQUESTED belongs to the
- * Phase 9 contact-sharing flow, not an owner-triggered status change.
+ * current status. Matches docs/decisions/0001-phase-0-mvp-scope.md §4.2:
+ * `SUBMITTED → VIEWED → SHORTLISTED → CONTACT_REQUESTED → ACCEPTED`, with
+ * DECLINED reachable only from SUBMITTED/VIEWED/SHORTLISTED. ACCEPTED is
+ * deliberately NOT reachable directly from SHORTLISTED — CONTACT_REQUESTED
+ * is its own step, entered as a side effect of the Phase 9 contact-sharing
+ * flow (ApplicationsService.markContactRequested), not this owner-status
+ * endpoint. CLOSED is likewise not owner-status-driven here — it's set in
+ * bulk when the listing itself closes (ListingOwnerService.close).
  */
 const OWNER_TRANSITIONS: Partial<Record<ApplicationStatus, ApplicationStatus[]>> = {
   SUBMITTED: ['VIEWED', 'SHORTLISTED', 'DECLINED'],
   VIEWED: ['SHORTLISTED', 'DECLINED'],
-  SHORTLISTED: ['ACCEPTED', 'DECLINED'],
+  SHORTLISTED: ['DECLINED'],
+  CONTACT_REQUESTED: ['ACCEPTED'],
 };
 
 /**
  * The applicant can withdraw any time before the owner has made a final
- * call. A listing closing does not itself withdraw outstanding
- * applications — closing only blocks new ones; existing applications stay
- * reviewable (blueprint Phase 8: "Define explicitly whether existing
- * applications can still be reviewed" — here, yes).
+ * call, including after contact sharing has started (decision record
+ * §4.2: withdraw is valid from SUBMITTED/VIEWED/SHORTLISTED/
+ * CONTACT_REQUESTED). A listing closing does not itself withdraw
+ * outstanding applications — closing only blocks new ones; existing
+ * applications are instead moved to CLOSED in bulk (ListingOwnerService.close).
  */
-const WITHDRAWABLE_STATUSES: ApplicationStatus[] = ['SUBMITTED', 'VIEWED', 'SHORTLISTED'];
+const WITHDRAWABLE_STATUSES: ApplicationStatus[] = ['SUBMITTED', 'VIEWED', 'SHORTLISTED', 'CONTACT_REQUESTED'];
 
 @Injectable()
 export class ApplicationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async apply(
     tutorUserId: string,
@@ -71,7 +81,7 @@ export class ApplicationsService {
       throw error;
     }
 
-    await this.notify(listing.guardianUserId, 'APPLICATION_RECEIVED', {
+    await this.notifications.create(listing.guardianUserId, 'APPLICATION_RECEIVED', {
       applicationId: application.id,
       listingId,
     });
@@ -153,7 +163,7 @@ export class ApplicationsService {
 
     const updated = await this.transitionOrThrow(application, 'WITHDRAWN');
 
-    await this.notify(application.listing.guardianUserId, 'APPLICATION_UPDATED', {
+    await this.notifications.create(application.listing.guardianUserId, 'APPLICATION_UPDATED', {
       applicationId: application.id,
       listingId: application.listing.id,
       status: 'WITHDRAWN',
@@ -185,7 +195,7 @@ export class ApplicationsService {
 
     const updated = await this.transitionOrThrow(application, dto.status);
 
-    await this.notify(application.tutorProfile.userId, 'APPLICATION_UPDATED', {
+    await this.notifications.create(application.tutorProfile.userId, 'APPLICATION_UPDATED', {
       applicationId: application.id,
       listingId: application.listing.id,
       status: dto.status,
@@ -235,7 +245,62 @@ export class ApplicationsService {
     }
   }
 
-  private async notify(userId: string, type: NotificationType, payload: Record<string, unknown>): Promise<void> {
-    await this.prisma.notification.create({ data: { userId, type, payload: payload as Prisma.InputJsonValue } });
+  /**
+   * Shared by the Phase 9 contact-sharing and messaging flows, both scoped
+   * to one application: confirms the caller is the applicant or the
+   * listing owner (same 404-for-non-participant rule as getDetail) and
+   * returns just the ids those flows need.
+   */
+  async assertParticipant(
+    userId: string,
+    applicationId: string,
+  ): Promise<{
+    id: string;
+    status: ApplicationStatus;
+    listingId: string;
+    tutorUserId: string;
+    guardianUserId: string;
+  }> {
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+      select: {
+        id: true,
+        status: true,
+        listingId: true,
+        listing: { select: { guardianUserId: true } },
+        tutorProfile: { select: { userId: true } },
+      },
+    });
+
+    if (
+      !application ||
+      (application.tutorProfile.userId !== userId && application.listing.guardianUserId !== userId)
+    ) {
+      throw new NotFoundException('Application not found.');
+    }
+
+    return {
+      id: application.id,
+      status: application.status,
+      listingId: application.listingId,
+      tutorUserId: application.tutorProfile.userId,
+      guardianUserId: application.listing.guardianUserId,
+    };
+  }
+
+  /**
+   * The one status change the contact-sharing flow drives directly (Phase
+   * 9): SHORTLISTED -> CONTACT_REQUESTED on the first contact-share
+   * request. A no-op, not an error, once the application has moved past
+   * SHORTLISTED by the time this runs (already CONTACT_REQUESTED/ACCEPTED,
+   * or raced by a withdrawal/decline) — contact sharing itself stays valid
+   * in all of those cases; only this status bump becomes irrelevant.
+   */
+  async markContactRequested(applicationId: string, currentStatus: ApplicationStatus): Promise<void> {
+    if (currentStatus !== 'SHORTLISTED') return;
+    await this.prisma.application.updateMany({
+      where: { id: applicationId, status: 'SHORTLISTED' },
+      data: { status: 'CONTACT_REQUESTED' },
+    });
   }
 }

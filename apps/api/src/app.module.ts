@@ -11,6 +11,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { GuardiansModule } from './modules/guardians/guardians.module';
 import { HealthModule } from './modules/health/health.module';
 import { ListingsModule } from './modules/listings/listings.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 import { TutorsModule } from './modules/tutors/tutors.module';
 import { UsersModule } from './modules/users/users.module';
@@ -38,6 +39,7 @@ import { UsersModule } from './modules/users/users.module';
     ListingsModule,
     GuardiansModule,
     ApplicationsModule,
+    MessagingModule,
   ],
   providers: [
     // Order matters: authenticate first, then check roles.

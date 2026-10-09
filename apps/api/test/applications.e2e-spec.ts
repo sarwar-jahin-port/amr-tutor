@@ -226,12 +226,22 @@ describe('Applications and status management (e2e)', () => {
         .expect(403);
     });
 
-    it('shortlists, then accepts, and notifies the tutor each time', async () => {
+    it('shortlists, then accepts once contact sharing has started, and notifies the tutor each time', async () => {
       const shortlisted = await authed(guardian.token)
         .patch(`/api/v1/applications/${applicationId}/status`)
         .send({ status: 'SHORTLISTED' })
         .expect(200);
       expect(shortlisted.body.data.status).toBe('SHORTLISTED');
+
+      await authed(guardian.token)
+        .patch(`/api/v1/applications/${applicationId}/status`)
+        .send({ status: 'ACCEPTED' })
+        .expect(400);
+
+      // Reaching CONTACT_REQUESTED is Phase 9's contact-share flow (its own
+      // spec file) — simulate it here the same way other specs simulate an
+      // out-of-phase precondition directly through Prisma.
+      await prisma.application.update({ where: { id: applicationId }, data: { status: 'CONTACT_REQUESTED' } });
 
       const accepted = await authed(guardian.token)
         .patch(`/api/v1/applications/${applicationId}/status`)
@@ -242,7 +252,7 @@ describe('Applications and status management (e2e)', () => {
       const notifications = await prisma.notification.findMany({
         where: { userId: tutor.userId, type: 'APPLICATION_UPDATED' },
       });
-      expect(notifications.length).toBeGreaterThanOrEqual(2);
+      expect(notifications.length).toBeGreaterThanOrEqual(1);
     });
 
     it('rejects withdrawing an already-accepted application', async () => {

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import type { ApplicationStatus, Prisma } from '@prisma/client';
 import { PaginatedResponse, PaginationQueryDto, paginate } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateListingDto, UpdateListingDto } from './dto/create-listing.dto';
@@ -8,6 +8,9 @@ import {
   PublicListingDetailDto,
   toPublicListingDetailDto,
 } from './dto/public-listing.dto';
+
+/** Every ApplicationStatus that isn't already a final outcome. */
+const OPEN_APPLICATION_STATUSES: ApplicationStatus[] = ['SUBMITTED', 'VIEWED', 'SHORTLISTED', 'CONTACT_REQUESTED'];
 
 @Injectable()
 export class ListingOwnerService {
@@ -153,7 +156,13 @@ export class ListingOwnerService {
     return toPublicListingDetailDto(listing);
   }
 
-  /** Idempotent: closing an already-closed listing is a no-op, not an error. */
+  /**
+   * Idempotent: closing an already-closed listing is a no-op, not an
+   * error. Also moves every outstanding application to CLOSED (decision
+   * record §4.2: "any non-terminal state -> CLOSED" when the listing
+   * itself closes) — ACCEPTED/DECLINED/WITHDRAWN applications are already
+   * final and are left untouched.
+   */
   async close(userId: string, listingId: string): Promise<PublicListingDetailDto> {
     const existing = await this.findOwnedOrThrow(userId, listingId);
 
@@ -161,10 +170,17 @@ export class ListingOwnerService {
       return toPublicListingDetailDto(existing);
     }
 
-    const listing = await this.prisma.tuitionListing.update({
-      where: { id: listingId },
-      data: { status: 'CLOSED', closedAt: new Date() },
-      include: LISTING_INCLUDE,
+    const listing = await this.prisma.$transaction(async (tx) => {
+      await tx.application.updateMany({
+        where: { listingId, status: { in: OPEN_APPLICATION_STATUSES } },
+        data: { status: 'CLOSED' },
+      });
+
+      return tx.tuitionListing.update({
+        where: { id: listingId },
+        data: { status: 'CLOSED', closedAt: new Date() },
+        include: LISTING_INCLUDE,
+      });
     });
 
     return toPublicListingDetailDto(listing);

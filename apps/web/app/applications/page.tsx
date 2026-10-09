@@ -14,9 +14,12 @@ import { useAuth } from '@/features/auth/auth-context';
 import { getMyApplications, withdrawApplication } from '@/features/applications/api';
 import { APPLICATION_STATUS_BADGE, APPLICATION_STATUS_LABEL } from '@/features/applications/format';
 import type { ApplicationDetail } from '@/features/applications/types';
+import { createConversation } from '@/features/messaging/api';
 import { AuthedApiError } from '@/lib/authed-api';
 
 const WITHDRAWABLE_STATUSES = new Set(['SUBMITTED', 'VIEWED', 'SHORTLISTED']);
+/** Messaging opens once the owner has shown interest (decision record §4.2 state chain). */
+const MESSAGEABLE_STATUSES = new Set(['SHORTLISTED', 'CONTACT_REQUESTED', 'ACCEPTED']);
 
 function ApplicationRow({
   application,
@@ -25,7 +28,9 @@ function ApplicationRow({
   application: ApplicationDetail;
   onWithdrawn: (updated: ApplicationDetail) => void;
 }) {
+  const router = useRouter();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
 
   async function handleWithdraw() {
     setIsWithdrawing(true);
@@ -36,6 +41,18 @@ function ApplicationRow({
       toast({ title: "Couldn't withdraw", description: message, variant: 'danger' });
     } finally {
       setIsWithdrawing(false);
+    }
+  }
+
+  async function handleMessage() {
+    setIsOpeningChat(true);
+    try {
+      const conversation = await createConversation(application.id);
+      router.push(`/messages/${conversation.id}`);
+    } catch (error) {
+      const message = error instanceof AuthedApiError ? error.message : 'Something went wrong. Please try again.';
+      toast({ title: "Couldn't open the conversation", description: message, variant: 'danger' });
+      setIsOpeningChat(false);
     }
   }
 
@@ -54,11 +71,18 @@ function ApplicationRow({
           </span>
         </div>
       </div>
-      {WITHDRAWABLE_STATUSES.has(application.status) && (
-        <Button variant="tertiary" size="sm" isLoading={isWithdrawing} onClick={() => void handleWithdraw()}>
-          Withdraw
-        </Button>
-      )}
+      <div className="flex gap-2">
+        {MESSAGEABLE_STATUSES.has(application.status) && (
+          <Button variant="secondary" size="sm" isLoading={isOpeningChat} onClick={() => void handleMessage()}>
+            Message
+          </Button>
+        )}
+        {WITHDRAWABLE_STATUSES.has(application.status) && (
+          <Button variant="tertiary" size="sm" isLoading={isWithdrawing} onClick={() => void handleWithdraw()}>
+            Withdraw
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

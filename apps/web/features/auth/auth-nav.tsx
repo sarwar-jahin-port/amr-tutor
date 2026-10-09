@@ -30,6 +30,9 @@ export function AuthNav() {
       <span className="hidden text-ink-secondary sm:inline">
         {user.email} ({user.roles.join(', ')})
       </span>
+      <Link href="/messages" className="text-ink hover:text-primary">
+        Messages
+      </Link>
       <Link href="/dashboard" className="text-ink hover:text-primary">
         Dashboard
       </Link>

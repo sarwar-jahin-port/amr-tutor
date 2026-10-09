@@ -80,6 +80,9 @@ function TutorProfileCard() {
             View public profile
           </Link>
         </Button>
+        <Button asChild variant="tertiary" size="sm">
+          <Link href="/applications">My applications</Link>
+        </Button>
       </div>
     </div>
   );
@@ -124,6 +127,9 @@ function ListingRow({ listing, onClosed }: { listing: ListingDetail; onClosed: (
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
+        <Button asChild variant="secondary" size="sm">
+          <Link href={`/listings/${listing.id}/applicants`}>Applicants</Link>
+        </Button>
         {canEdit && (
           <Button asChild variant="secondary" size="sm">
             <Link href={`/listings/${listing.id}/edit`}>Edit</Link>

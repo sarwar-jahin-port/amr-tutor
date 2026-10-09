@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { SiteHeader } from '@/components/site-header';
+import { ApplySection } from '@/features/applications/apply-section';
 import { getListing } from '@/features/marketplace/api';
 import { formatMinutes, formatSalaryRange, TEACHING_MODE_LABEL, WEEKDAY_LABEL } from '@/features/marketplace/format';
 
@@ -131,14 +131,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
             {/* Third: next action */}
             <section className="flex flex-col gap-3 border-t border-border pt-6">
-              <Button size="lg" className="self-start" disabled>
-                Apply for this tuition
-              </Button>
-              <p className="text-sm text-ink-secondary">
-                Applications aren&apos;t open yet on this platform — this feature is coming soon.
-                When it launches, applying will send your profile to the guardian; your phone number
-                stays private unless both of you agree to share contact details.
-              </p>
+              <ApplySection listingId={result.data.id} listingStatus={result.data.status} />
             </section>
           </>
         )}

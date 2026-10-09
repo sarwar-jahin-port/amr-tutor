@@ -1,1 +1,135 @@
 @import 'tailwindcss';
+
+/*
+ * Design tokens for the "Learning Commons" visual direction.
+ * Source of truth: docs/ui-ux.md §4-6, §17-18 and docs/master_implementation_blueprint.md Phase 4.
+ * Tailwind v4 reads the `@theme` block below and generates matching utilities
+ * (e.g. --color-canvas -> bg-canvas/text-canvas/border-canvas, --duration-fast -> duration-fast).
+ */
+@theme {
+  --color-canvas: #f8f7f2;
+  --color-surface: #ffffff;
+  --color-ink: #202923;
+  --color-ink-secondary: #59635b;
+  --color-primary: #245b45;
+  --color-primary-hover: #194634;
+  --color-primary-foreground: #ffffff;
+  --color-soft-green: #eaf2eb;
+  --color-border: #e2e5de;
+  --color-warm-accent: #d99a56;
+  --color-danger: #b42318;
+  --color-danger-surface: #fdecea;
+  --color-success: #246b45;
+  --color-information: #245d8c;
+
+  --font-sans:
+    var(--font-inter), var(--font-noto-sans-bengali), ui-sans-serif, system-ui, sans-serif;
+  --font-bengali: var(--font-noto-sans-bengali), var(--font-inter), ui-sans-serif, system-ui;
+
+  --shadow-elevated: 0 12px 32px -8px rgba(32, 41, 35, 0.18), 0 2px 8px -2px rgba(32, 41, 35, 0.08);
+
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 260ms;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Baseline focus-visible ring for any focusable element that doesn't define its own. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Native checkbox/radio ticks use the brand green instead of the browser default blue. */
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-primary);
+  }
+}
+
+/* Entrance animation shared by popover-like overlays (Select, Dialog, DropdownMenu, Toast). */
+@keyframes content-show {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-content-show {
+  animation: content-show var(--duration-base) ease-out;
+}
+
+.animate-toast-in {
+  animation: toast-slide-in var(--duration-base) ease-out;
+}
+
+@keyframes sheet-slide-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes sheet-slide-bottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-right {
+  animation: sheet-slide-right var(--duration-slow) ease-out;
+}
+
+.animate-sheet-bottom {
+  animation: sheet-slide-bottom var(--duration-slow) ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

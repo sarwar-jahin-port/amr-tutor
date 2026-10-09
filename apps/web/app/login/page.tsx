@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/ui/container';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input, PasswordInput } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
 
 const loginSchema = z.object({
@@ -37,59 +42,48 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
+    <Container as="main" narrow className="flex min-h-screen flex-col justify-center gap-6 py-16">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">Log in</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-stone-700">
-            Email
-          </label>
-          <input
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
             id="email"
             type="email"
             autoComplete="email"
-            className="rounded-md border border-stone-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            aria-invalid={!!errors.email || undefined}
+            aria-describedby={errors.email ? 'email-error' : undefined}
             {...register('email')}
           />
-          {errors.email && <p className="text-sm text-red-700">{errors.email.message}</p>}
-        </div>
+          <FieldError id="email-error">{errors.email?.message}</FieldError>
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium text-stone-700">
-            Password
-          </label>
-          <input
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
-            className="rounded-md border border-stone-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            aria-invalid={!!errors.password || undefined}
+            aria-describedby={errors.password ? 'password-error' : undefined}
             {...register('password')}
           />
-          {errors.password && <p className="text-sm text-red-700">{errors.password.message}</p>}
-        </div>
+          <FieldError id="password-error">{errors.password?.message}</FieldError>
+        </Field>
 
-        {formError && (
-          <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
-            {formError}
-          </p>
-        )}
+        {formError && <Alert variant="danger">{formError}</Alert>}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded-full bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           {isSubmitting ? 'Logging in…' : 'Log in'}
-        </button>
+        </Button>
       </form>
 
-      <p className="text-sm text-stone-600">
+      <p className="text-sm text-ink-secondary">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="font-medium text-emerald-700 hover:underline">
+        <Link href="/register" className="font-medium text-primary hover:underline">
           Register
         </Link>
       </p>
-    </main>
+    </Container>
   );
 }

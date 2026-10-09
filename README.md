@@ -6,7 +6,7 @@ See [`docs/master_implementation_blueprint.md`](docs/master_implementation_bluep
 
 ## Status
 
-**Phase 3 — Authentication and authorization.** Registration, login, token refresh/rotation, logout, and self-service role management work end to end (API + web UI), with role- and status-based authorization guards protecting every route by default. Password reset and email/phone verification are explicitly deferred (see decision record 0001 §10) pending an email/SMS provider choice. Every other product feature (profiles, listings, applications, messaging, ...) is still unimplemented.
+**Phase 4 — Design system and UI foundation.** Registration, login, token refresh/rotation, logout, and self-service role management work end to end (API + web UI), with role- and status-based authorization guards protecting every route by default. Password reset and email/phone verification are explicitly deferred (see decision record 0001 §10) pending an email/SMS provider choice. The "Learning Commons" visual direction (docs/ui-ux.md) is now implemented as design tokens (`apps/web/app/globals.css`) and ~20 reusable components under `apps/web/components/ui/` — see `/style-guide` for a living reference. Every other product feature (profiles, listings, applications, messaging, search, ...) is still unimplemented.
 
 ## Stack
 

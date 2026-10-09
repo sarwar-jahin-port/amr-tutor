@@ -12,7 +12,7 @@ test('a visitor can register, land on the dashboard, survive a reload, and log o
 
   await page.goto('/register');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('checkbox', { name: 'Tutor', exact: true }).check();
   await page.getByRole('button', { name: 'Register' }).click();
 
@@ -38,7 +38,7 @@ test('a visitor can register, land on the dashboard, survive a reload, and log o
 test('login rejects the wrong password with a visible error', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill(uniqueEmail());
-  await page.getByLabel('Password').fill('whatever-password');
+  await page.getByLabel('Password', { exact: true }).fill('whatever-password');
   await page.getByRole('button', { name: 'Log in' }).click();
 
   await expect(page.getByText(/invalid email or password/i)).toBeVisible();

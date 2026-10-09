@@ -4,8 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Checkbox, CheckboxLabel } from '@/components/ui/checkbox';
+import { Container } from '@/components/ui/container';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input, PasswordInput, PhoneInput } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
 
 const registerSchema = z.object({
@@ -21,6 +27,11 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+const ROLE_OPTIONS = [
+  { value: 'TUTOR', label: 'Tutor' },
+  { value: 'GUARDIAN', label: 'Guardian looking for a tutor' },
+] as const;
+
 export default function RegisterPage() {
   const { register: registerAccount } = useAuth();
   const router = useRouter();
@@ -28,6 +39,7 @@ export default function RegisterPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
@@ -51,87 +63,92 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
+    <Container as="main" narrow className="flex min-h-screen flex-col justify-center gap-6 py-16">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">Create an account</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-stone-700">
-            Email
-          </label>
-          <input
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
             id="email"
             type="email"
             autoComplete="email"
-            className="rounded-md border border-stone-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            aria-invalid={!!errors.email || undefined}
+            aria-describedby={errors.email ? 'email-error' : undefined}
             {...register('email')}
           />
-          {errors.email && <p className="text-sm text-red-700">{errors.email.message}</p>}
-        </div>
+          <FieldError id="email-error">{errors.email?.message}</FieldError>
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="phone" className="text-sm font-medium text-stone-700">
-            Phone (optional)
-          </label>
-          <input
+        <Field>
+          <FieldLabel htmlFor="phone">Phone (optional)</FieldLabel>
+          <PhoneInput
             id="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="01712345678"
-            className="rounded-md border border-stone-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            aria-invalid={!!errors.phone || undefined}
+            aria-describedby={errors.phone ? 'phone-error' : undefined}
             {...register('phone')}
           />
-          {errors.phone && <p className="text-sm text-red-700">{errors.phone.message}</p>}
-        </div>
+          <FieldError id="phone-error">{errors.phone?.message}</FieldError>
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium text-stone-700">
-            Password
-          </label>
-          <input
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
-            className="rounded-md border border-stone-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            aria-invalid={!!errors.password || undefined}
+            aria-describedby={errors.password ? 'password-error' : undefined}
             {...register('password')}
           />
-          {errors.password && <p className="text-sm text-red-700">{errors.password.message}</p>}
-        </div>
+          <FieldError id="password-error">{errors.password?.message}</FieldError>
+        </Field>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-stone-700">I am a…</legend>
-          <label className="flex items-center gap-2 text-sm text-stone-700">
-            <input type="checkbox" value="TUTOR" {...register('roles')} />
-            Tutor
-          </label>
-          <label className="flex items-center gap-2 text-sm text-stone-700">
-            <input type="checkbox" value="GUARDIAN" {...register('roles')} />
-            Guardian looking for a tutor
-          </label>
-          {errors.roles && <p className="text-sm text-red-700">{errors.roles.message}</p>}
+        <fieldset className="flex flex-col gap-3">
+          <legend className="text-sm font-medium text-ink">I am a…</legend>
+          <Controller
+            name="roles"
+            control={control}
+            render={({ field }) => (
+              <>
+                {ROLE_OPTIONS.map((role) => {
+                  const id = `role-${role.value.toLowerCase()}`;
+                  const checked = field.value.includes(role.value);
+                  return (
+                    <div key={role.value} className="flex items-center gap-2">
+                      <Checkbox
+                        id={id}
+                        checked={checked}
+                        onCheckedChange={(next) => {
+                          field.onChange(
+                            next
+                              ? [...field.value, role.value]
+                              : field.value.filter((r) => r !== role.value),
+                          );
+                        }}
+                      />
+                      <CheckboxLabel htmlFor={id}>{role.label}</CheckboxLabel>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          />
+          <FieldError>{errors.roles?.message}</FieldError>
         </fieldset>
 
-        {formError && (
-          <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
-            {formError}
-          </p>
-        )}
+        {formError && <Alert variant="danger">{formError}</Alert>}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded-full bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
-        >
+        <Button type="submit" isLoading={isSubmitting}>
           {isSubmitting ? 'Creating account…' : 'Register'}
-        </button>
+        </Button>
       </form>
 
-      <p className="text-sm text-stone-600">
+      <p className="text-sm text-ink-secondary">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-emerald-700 hover:underline">
+        <Link href="/login" className="font-medium text-primary hover:underline">
           Log in
         </Link>
       </p>
-    </main>
+    </Container>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { useAuth } from './auth-context';
 
 /** Role-aware navigation: shows different links depending on auth status. */
@@ -8,40 +9,33 @@ export function AuthNav() {
   const { status, user, logout } = useAuth();
 
   if (status === 'loading') {
-    return <span className="text-sm text-stone-400">Loading…</span>;
+    return <span className="text-sm text-ink-secondary">Loading…</span>;
   }
 
   if (status === 'unauthenticated' || !user) {
     return (
-      <nav className="flex items-center gap-4 text-sm font-medium">
-        <Link href="/login" className="text-stone-700 hover:text-stone-900">
+      <nav className="flex items-center gap-3 text-sm font-medium">
+        <Link href="/login" className="text-ink hover:text-primary">
           Log in
         </Link>
-        <Link
-          href="/register"
-          className="rounded-full bg-emerald-700 px-4 py-1.5 text-white hover:bg-emerald-800"
-        >
-          Register
-        </Link>
+        <Button asChild size="sm">
+          <Link href="/register">Register</Link>
+        </Button>
       </nav>
     );
   }
 
   return (
-    <nav className="flex items-center gap-4 text-sm font-medium">
-      <span className="text-stone-600">
+    <nav className="flex items-center gap-3 text-sm font-medium">
+      <span className="hidden text-ink-secondary sm:inline">
         {user.email} ({user.roles.join(', ')})
       </span>
-      <Link href="/dashboard" className="text-stone-700 hover:text-stone-900">
+      <Link href="/dashboard" className="text-ink hover:text-primary">
         Dashboard
       </Link>
-      <button
-        type="button"
-        onClick={() => void logout()}
-        className="rounded-full border border-stone-300 px-4 py-1.5 hover:bg-stone-100"
-      >
+      <Button variant="secondary" size="sm" onClick={() => void logout()}>
         Log out
-      </button>
+      </Button>
     </nav>
   );
 }

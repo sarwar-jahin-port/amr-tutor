@@ -2,6 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/ui/container';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/features/auth/auth-context';
 
 export default function DashboardPage() {
@@ -19,45 +23,44 @@ export default function DashboardPage() {
 
   if (status === 'loading') {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">Loading…</p>
-      </main>
+      <Container as="main" narrow className="flex min-h-screen flex-col justify-center gap-4 py-16">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-32 w-full" />
+      </Container>
     );
   }
 
   if (status === 'unauthenticated' || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-stone-500">Redirecting to log in…</p>
-      </main>
+      <Container as="main" className="flex min-h-screen items-center justify-center">
+        <p className="text-ink-secondary">Redirecting to log in…</p>
+      </Container>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-      <div className="rounded-lg border border-stone-200 bg-white p-4">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="font-medium text-stone-500">Email</dt>
-          <dd>{user.email}</dd>
-          <dt className="font-medium text-stone-500">Phone</dt>
-          <dd>{user.phone ?? '—'}</dd>
-          <dt className="font-medium text-stone-500">Roles</dt>
-          <dd>{user.roles.join(', ')}</dd>
-          <dt className="font-medium text-stone-500">Status</dt>
-          <dd>{user.status}</dd>
+    <Container as="main" narrow className="flex min-h-screen flex-col gap-6 py-16">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">Dashboard</h1>
+      <div className="rounded-2xl border border-border bg-surface p-5">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm">
+          <dt className="font-medium text-ink-secondary">Email</dt>
+          <dd className="text-ink">{user.email}</dd>
+          <dt className="font-medium text-ink-secondary">Phone</dt>
+          <dd className="text-ink">{user.phone ?? '—'}</dd>
+          <dt className="font-medium text-ink-secondary">Roles</dt>
+          <dd className="text-ink">{user.roles.join(', ')}</dd>
+          <dt className="font-medium text-ink-secondary">Status</dt>
+          <dd>
+            <Badge variant={user.status === 'ACTIVE' ? 'success' : 'neutral'}>{user.status}</Badge>
+          </dd>
         </dl>
       </div>
-      <p className="text-sm text-stone-500">
+      <p className="text-sm text-ink-secondary">
         Profile setup, listings, and applications arrive in later phases.
       </p>
-      <button
-        type="button"
-        onClick={() => void logout()}
-        className="self-start rounded-full border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-100"
-      >
+      <Button variant="secondary" className="self-start" onClick={() => void logout()}>
         Log out
-      </button>
-    </main>
+      </Button>
+    </Container>
   );
 }

@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/site-header';
 import { ApplySection } from '@/features/applications/apply-section';
 import { getListing } from '@/features/marketplace/api';
 import { formatMinutes, formatSalaryRange, TEACHING_MODE_LABEL, WEEKDAY_LABEL } from '@/features/marketplace/format';
+import { ReportDialog } from '@/features/reports/report-dialog';
 
 interface ListingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -132,6 +133,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             {/* Third: next action */}
             <section className="flex flex-col gap-3 border-t border-border pt-6">
               <ApplySection listingId={result.data.id} listingStatus={result.data.status} />
+              <ReportDialog target={{ listingId: result.data.id }} label="Report this listing" />
             </section>
           </>
         )}

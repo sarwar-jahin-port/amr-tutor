@@ -287,11 +287,11 @@ export default function DashboardPage() {
 
       {user.roles.includes('GUARDIAN') && <GuardianListingsCard />}
 
-      {(user.roles.includes('VERIFIER') || user.roles.includes('ADMIN')) && (
+      {(user.roles.includes('VERIFIER') || user.roles.includes('MODERATOR') || user.roles.includes('ADMIN')) && (
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
-          <p className="font-semibold text-ink">Reviewer tools</p>
+          <p className="font-semibold text-ink">Moderation tools</p>
           <Button asChild variant="secondary" size="sm" className="self-start">
-            <Link href="/admin/verifications">Review verification requests</Link>
+            <Link href="/admin">Open moderation dashboard</Link>
           </Button>
         </div>
       )}

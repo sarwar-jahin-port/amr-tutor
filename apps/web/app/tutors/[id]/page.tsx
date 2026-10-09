@@ -10,6 +10,7 @@ import { SiteHeader } from '@/components/site-header';
 import { getTutor } from '@/features/marketplace/api';
 import { formatMinutes, formatSalaryRange, WEEKDAY_LABEL } from '@/features/marketplace/format';
 import type { AcademicStatus } from '@/features/marketplace/types';
+import { ReportDialog } from '@/features/reports/report-dialog';
 
 const ACADEMIC_STATUS_LABEL: Record<AcademicStatus, string> = {
   CURRENT_STUDENT: 'Current student',
@@ -142,9 +143,12 @@ export default async function TutorProfilePage({ params }: TutorProfilePageProps
             </Alert>
 
             {/* 8: next action */}
-            <Button asChild size="lg" className="self-start">
-              <Link href="/tuition">View tuition opportunities</Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild size="lg">
+                <Link href="/tuition">View tuition opportunities</Link>
+              </Button>
+              <ReportDialog target={{ tutorProfileId: id }} label="Report this tutor" />
+            </div>
           </>
         )}
       </Container>

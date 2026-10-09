@@ -13,6 +13,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ListingsModule } from './modules/listings/listings.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { ReferenceModule } from './modules/reference/reference.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { TutorsModule } from './modules/tutors/tutors.module';
 import { UsersModule } from './modules/users/users.module';
 import { VerificationsModule } from './modules/verifications/verifications.module';
@@ -42,6 +43,7 @@ import { VerificationsModule } from './modules/verifications/verifications.modul
     ApplicationsModule,
     MessagingModule,
     VerificationsModule,
+    ReportsModule,
   ],
   providers: [
     // Order matters: authenticate first, then check roles.

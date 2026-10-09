@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { ContactSharePanel } from '@/features/contact-sharing/contact-share-panel';
 import { getConversations, getMessages, markConversationRead, sendMessage } from '@/features/messaging/api';
 import type { ConversationSummary, Message } from '@/features/messaging/types';
+import { ReportDialog } from '@/features/reports/report-dialog';
 
 // Decision record item 14: persisted messaging with short-interval polling
 // at launch, not WebSockets — simplest reliable delivery first.
@@ -149,7 +150,10 @@ export default function ConversationPage() {
           <Link href="/messages" className="text-sm text-ink-secondary hover:text-primary">
             ← Back to messages
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{conversation.counterpart.displayName}</h1>
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">{conversation.counterpart.displayName}</h1>
+            <ReportDialog target={{ targetUserId: conversation.counterpart.userId }} label="Report" />
+          </div>
           <p className="text-sm text-ink-secondary">{conversation.listing.title}</p>
         </div>
 

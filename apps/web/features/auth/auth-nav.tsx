@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/features/notifications/notification-bell';
 import { useAuth } from './auth-context';
 
 /** Role-aware navigation: shows different links depending on auth status. */
@@ -36,6 +37,7 @@ export function AuthNav() {
       <Link href="/dashboard" className="text-ink hover:text-primary">
         Dashboard
       </Link>
+      <NotificationBell />
       <Button variant="secondary" size="sm" onClick={() => void logout()}>
         Log out
       </Button>

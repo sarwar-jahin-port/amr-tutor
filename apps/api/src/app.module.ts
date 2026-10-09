@@ -8,6 +8,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { HealthModule } from './modules/health/health.module';
+import { ListingsModule } from './modules/listings/listings.module';
+import { ReferenceModule } from './modules/reference/reference.module';
+import { TutorsModule } from './modules/tutors/tutors.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -28,6 +31,9 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    ReferenceModule,
+    TutorsModule,
+    ListingsModule,
   ],
   providers: [
     // Order matters: authenticate first, then check roles.

@@ -16,10 +16,10 @@ export function AuthNav() {
     return (
       <nav className="flex items-center gap-3 text-sm font-medium">
         <Link href="/login" className="text-ink hover:text-primary">
-          Log in
+          Sign in
         </Link>
         <Button asChild size="sm">
-          <Link href="/register">Register</Link>
+          <Link href="/register">Create account</Link>
         </Button>
       </nav>
     );

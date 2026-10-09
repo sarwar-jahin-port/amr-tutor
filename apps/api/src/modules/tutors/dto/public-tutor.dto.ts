@@ -1,11 +1,28 @@
-import type { AcademicStatus, Weekday } from '@prisma/client';
+import type { AcademicStatus, Prisma, Weekday } from '@prisma/client';
+
+/**
+ * The relations every tutor-profile response (public or the owner's own
+ * view) needs. Shared so the public search/detail endpoints (Phase 5) and
+ * the authenticated "me" endpoints (Phase 6) stay in sync by construction.
+ */
+export const TUTOR_PROFILE_INCLUDE = {
+  university: { select: { id: true, name: true } },
+  subjects: { include: { subject: { select: { id: true, name: true } } } },
+  grades: { select: { gradeLevel: true } },
+  curricula: { include: { curriculum: { select: { id: true, name: true } } } },
+  locations: { select: { city: true, area: true, neighborhood: true } },
+  availability: { select: { day: true, startMinute: true, endMinute: true } },
+} satisfies Prisma.TutorProfileInclude;
 
 /**
  * Public-safe tutor shapes. Deliberately excludes userId, profilePhotoKey
  * (a private storage key, not a servable URL yet), and any verification
  * record — never serialize a raw Prisma TutorProfile (blueprint Phase 5:
  * "Never expose ... in public tutor search" / "Return only public response
- * DTOs").
+ * DTOs"). The owner's own view (Phase 6) reuses the same shape — there is
+ * no extra private field on TutorProfile itself (contact info lives on
+ * User), so what's safe to show the public is also everything there is to
+ * show the owner.
  */
 export interface PublicTutorSummaryDto {
   id: string;

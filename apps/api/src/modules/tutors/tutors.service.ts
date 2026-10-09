@@ -6,18 +6,10 @@ import { TutorSearchQueryDto } from './dto/tutor-search-query.dto';
 import {
   PublicTutorProfileDto,
   PublicTutorSummaryDto,
+  TUTOR_PROFILE_INCLUDE,
   toPublicTutorProfileDto,
   toPublicTutorSummaryDto,
 } from './dto/public-tutor.dto';
-
-const PUBLIC_INCLUDE = {
-  university: { select: { id: true, name: true } },
-  subjects: { include: { subject: { select: { id: true, name: true } } } },
-  grades: { select: { gradeLevel: true } },
-  curricula: { include: { curriculum: { select: { id: true, name: true } } } },
-  locations: { select: { city: true, area: true, neighborhood: true } },
-  availability: { select: { day: true, startMinute: true, endMinute: true } },
-} satisfies Prisma.TutorProfileInclude;
 
 @Injectable()
 export class TutorsService {
@@ -29,7 +21,7 @@ export class TutorsService {
     const [rows, total] = await Promise.all([
       this.prisma.tutorProfile.findMany({
         where,
-        include: PUBLIC_INCLUDE,
+        include: TUTOR_PROFILE_INCLUDE,
         orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.limit,
         take: query.limit,
@@ -43,7 +35,7 @@ export class TutorsService {
   async findPublicById(id: string): Promise<PublicTutorProfileDto> {
     const profile = await this.prisma.tutorProfile.findFirst({
       where: { id, isAvailable: true, user: { status: 'ACTIVE', deletedAt: null } },
-      include: PUBLIC_INCLUDE,
+      include: TUTOR_PROFILE_INCLUDE,
     });
 
     if (!profile) {

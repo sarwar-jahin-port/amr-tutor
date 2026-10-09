@@ -1,3 +1,4 @@
+import { BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import type { AcademicStatus, TutorSummary } from './types';
@@ -16,7 +17,12 @@ export function TutorResultCard({ tutor }: { tutor: TutorSummary }) {
       className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 transition-colors duration-fast hover:border-primary"
     >
       <div className="flex flex-col gap-1">
-        <p className="text-lg font-semibold text-ink">{tutor.fullName}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-lg font-semibold text-ink">{tutor.fullName}</p>
+          {tutor.isVerified && (
+            <BadgeCheck className="size-4 shrink-0 text-primary" aria-label="Verified" />
+          )}
+        </div>
         <p className="text-sm text-ink-secondary">
           {tutor.university.name} · {ACADEMIC_STATUS_LABEL[tutor.academicStatus]}
         </p>

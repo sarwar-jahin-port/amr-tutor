@@ -83,6 +83,9 @@ function TutorProfileCard() {
         <Button asChild variant="tertiary" size="sm">
           <Link href="/applications">My applications</Link>
         </Button>
+        <Button asChild variant="tertiary" size="sm">
+          <Link href="/verification">Verification</Link>
+        </Button>
       </div>
     </div>
   );
@@ -283,6 +286,15 @@ export default function DashboardPage() {
       {user.roles.includes('TUTOR') && <TutorProfileCard />}
 
       {user.roles.includes('GUARDIAN') && <GuardianListingsCard />}
+
+      {(user.roles.includes('VERIFIER') || user.roles.includes('ADMIN')) && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
+          <p className="font-semibold text-ink">Reviewer tools</p>
+          <Button asChild variant="secondary" size="sm" className="self-start">
+            <Link href="/admin/verifications">Review verification requests</Link>
+          </Button>
+        </div>
+      )}
 
       <Button variant="secondary" className="self-start" onClick={() => void logout()}>
         Log out

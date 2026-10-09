@@ -1,4 +1,4 @@
-import { Clock, MapPin } from 'lucide-react';
+import { BadgeCheck, Clock, MapPin } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -50,7 +50,15 @@ export default async function TutorProfilePage({ params }: TutorProfilePageProps
           <>
             {/* 1-2: name, university, academic status */}
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-semibold tracking-tight text-ink">{result.data.fullName}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-semibold tracking-tight text-ink">{result.data.fullName}</h1>
+                {result.data.isVerified && (
+                  <Badge variant="success" className="gap-1">
+                    <BadgeCheck className="size-3.5" aria-hidden="true" />
+                    Verified
+                  </Badge>
+                )}
+              </div>
               <p className="text-ink-secondary">
                 {result.data.university.name} · {ACADEMIC_STATUS_LABEL[result.data.academicStatus]}
                 {result.data.academicYear ? ` · ${result.data.academicYear}` : ''}
@@ -126,12 +134,11 @@ export default async function TutorProfilePage({ params }: TutorProfilePageProps
               </p>
             </section>
 
-            {/* 7: verification explanation — honest about what hasn't been built yet */}
+            {/* 7: verification explanation */}
             <Alert variant="information" title="About verification">
-              Student verification is optional and still being rolled out on this platform. A
-              university affiliation check does not prove teaching ability, reliability, or
-              suitability for a particular child — use your own judgment when deciding who to work
-              with.
+              {result.data.isVerified
+                ? 'This tutor has verified their university affiliation with the platform. Verification does not prove teaching ability, reliability, or suitability for a particular child — use your own judgment when deciding who to work with.'
+                : "This tutor hasn't completed verification yet. Verification is optional and checks university affiliation only — use your own judgment when deciding who to work with regardless of verification status."}
             </Alert>
 
             {/* 8: next action */}

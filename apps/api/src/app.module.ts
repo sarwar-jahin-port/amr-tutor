@@ -15,6 +15,7 @@ import { MessagingModule } from './modules/messaging/messaging.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 import { TutorsModule } from './modules/tutors/tutors.module';
 import { UsersModule } from './modules/users/users.module';
+import { VerificationsModule } from './modules/verifications/verifications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UsersModule } from './modules/users/users.module';
     GuardiansModule,
     ApplicationsModule,
     MessagingModule,
+    VerificationsModule,
   ],
   providers: [
     // Order matters: authenticate first, then check roles.

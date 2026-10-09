@@ -38,6 +38,7 @@ export interface TutorSummary {
   academicStatus: AcademicStatus;
   subjects: ReferenceItem[];
   grades: string[];
+  isVerified: boolean;
 }
 
 export interface TutorProfile extends TutorSummary {

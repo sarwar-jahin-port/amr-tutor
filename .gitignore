@@ -26,6 +26,9 @@ blob-report/
 # Prisma
 prisma/migrations/dev.db*
 
+# Local S3-compatible storage emulator data (EVIDENCE_STORAGE_MODE=local-emulator)
+.data/
+
 # Editor / OS
 .DS_Store
 .idea/

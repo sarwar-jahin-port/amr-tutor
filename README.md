@@ -6,7 +6,7 @@ See [`docs/master_implementation_blueprint.md`](docs/master_implementation_bluep
 
 ## Status
 
-**Phase 1 — Repository and development foundation.** The database schema (Phase 2), authentication (Phase 3), and every product feature are not implemented yet.
+**Phase 2 — Database and reference data.** The full data model (users, tutor/guardian profiles, listings, applications, messaging, verification, reports, consent, audit) is implemented and migrated. Authentication (Phase 3) and every product-facing feature/endpoint are not implemented yet — the schema exists, but nothing can be created through the API besides the health check.
 
 ## Stack
 
@@ -40,10 +40,10 @@ cp .env.example .env
 # 3. Start PostgreSQL (skip if you already have one running locally)
 docker compose up -d postgres
 
-# 4. Apply database migrations (none yet — Phase 2 introduces the schema)
+# 4. Apply database migrations
 pnpm run db:migrate
 
-# 5. Seed reference data (no-op until Phase 2)
+# 5. Seed reference data (subjects, curricula, a starting university directory)
 pnpm run db:seed
 
 # 6. Start both apps in dev mode
@@ -84,8 +84,9 @@ apps/
   web/     Next.js App Router frontend
   api/     NestJS REST API
 prisma/
-  schema.prisma   Data model (empty until Phase 2)
-  seed.ts         Reference-data seed script
+  schema.prisma   Full data model (see docs/database_schema_and_prisma_models.md)
+  migrations/     Generated SQL migrations (commit these)
+  seed.ts         Reference-data seed script (subjects, curricula, universities)
 docs/
   master_implementation_blueprint.md   Full phased implementation plan
   decisions/                            Finalized product/scope decisions

@@ -46,33 +46,39 @@ No payments, commissions, wallets, AI matching, reviews, or native apps in this 
 
 ## 4. Core entity states
 
-### 4.1 Tuition Listing
-`DRAFT → PENDING_REVIEW → PUBLISHED → PAUSED ⇄ PUBLISHED → FILLED / CLOSED`
+> **Phase 2 update (2026-10-09):** the states below were written before the detailed schema existed and used placeholder names. `docs/database_schema_and_prisma_models.md` is the authoritative source for entity states (per blueprint §3's document hierarchy) and is now implemented verbatim in `prisma/schema.prisma`, with one deliberate rename: its `Role.PARENT` is renamed to `Role.GUARDIAN` for consistency with item 3 above and the blueprint's own terminology. The sections below are updated to match the implemented enums; nothing about the underlying product decision (who can act, when) changes.
+
+### 4.1 Tuition Listing — `ListingStatus`
+`DRAFT → PENDING_REVIEW → PUBLISHED → PAUSED ⇄ PUBLISHED → FILLED / CLOSED / EXPIRED`
 Also: `REJECTED` (from `PENDING_REVIEW`, admin decision; guardian may edit and resubmit to `PENDING_REVIEW`).
 
 - Submitting a draft (`DRAFT → PENDING_REVIEW`) is the only way to request publication — there is no direct `DRAFT → PUBLISHED` or guardian-triggered publish.
 - Only an admin action moves a listing from `PENDING_REVIEW` to `PUBLISHED` or `REJECTED`.
 - A `PUBLISHED` listing a guardian edits in a way that affects public content returns to `PENDING_REVIEW` before the change goes live (exact field list to be finalized in Phase 7).
+- `EXPIRED` is reached automatically once `expiresAt` passes on a `PUBLISHED` listing (added in the Phase 2 schema; not in the original Phase 0 sketch, but a natural extension of "closed listings preserve historical applications").
 - Only `PUBLISHED` listings appear in public search.
-- `CLOSED`/`FILLED` listings keep historical applications readable to their original parties.
+- `CLOSED`/`FILLED`/`EXPIRED` listings keep historical applications readable to their original parties.
 
-### 4.2 Application
-`PENDING → SHORTLISTED → ACCEPTED`
-`PENDING → REJECTED`
-`PENDING or SHORTLISTED → WITHDRAWN` (tutor-initiated only)
+### 4.2 Application — `ApplicationStatus`
+The Phase 2 schema uses a more granular state machine than the Phase 0 sketch (`SUBMITTED`/`VIEWED` distinguish "not yet opened" from "guardian has seen it," and `CONTACT_REQUESTED` gives contact-sharing its own step before `ACCEPTED`):
 
-Transitions are owner/actor-restricted (see §5) and implemented as a dedicated service method, never a raw status PATCH.
+`SUBMITTED → VIEWED → SHORTLISTED → CONTACT_REQUESTED → ACCEPTED`
+`SUBMITTED | VIEWED | SHORTLISTED → DECLINED`
+`SUBMITTED | VIEWED | SHORTLISTED | CONTACT_REQUESTED → WITHDRAWN` (tutor-initiated only)
+`any non-terminal state → CLOSED` (e.g., the listing itself closes or fills via another applicant)
 
-### 4.3 Verification request
-`REQUESTED → EVIDENCE_SUBMITTED → UNDER_REVIEW → APPROVED | REJECTED | MORE_INFO_REQUESTED (loops back to EVIDENCE_SUBMITTED)`
+Transitions are owner/actor-restricted and implemented as a dedicated service method in Phase 8, never a raw status PATCH.
 
-Public projection exposes only a boolean/enum outcome (e.g., `UNIVERSITY_AFFILIATION_VERIFIED`), never the evidence or reviewer identity.
+### 4.3 Verification request — `VerificationStatus`
+`PENDING → IN_REVIEW → APPROVED | REJECTED | NEEDS_INFORMATION` (loops back to `PENDING` once more evidence is submitted), plus `CANCELLED` (requester-initiated withdrawal).
 
-### 4.4 Conversation / message
-Conversations are created only in the context of an existing application (no cold-messaging in MVP). Messages have no edit/delete in MVP; only a read-state flag per participant.
+Public projection exposes only a boolean/enum outcome (e.g., "university affiliation verified"), never the evidence or reviewer identity.
 
-### 4.5 Report
-`SUBMITTED → UNDER_INVESTIGATION → RESOLVED | DISMISSED`
+### 4.4 Conversation / message — `ConversationStatus`
+`ACTIVE ⇄ ARCHIVED`, plus `RESTRICTED` (moderation hold, e.g. after a report). Conversations are created only in the context of an existing application (no cold-messaging in MVP). Messages have no edit/delete in MVP; only a read-state flag per participant.
+
+### 4.5 Report — `ReportStatus`
+`OPEN → UNDER_REVIEW → ACTION_TAKEN | DISMISSED`
 
 ---
 

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amr-tutor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: amr_tutor
+      POSTGRES_PASSWORD: amr_tutor
+      POSTGRES_DB: amr_tutor
+    ports:
+      - '5432:5432'
+    volumes:
+      - amr_tutor_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U amr_tutor -d amr_tutor']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  amr_tutor_postgres_data:

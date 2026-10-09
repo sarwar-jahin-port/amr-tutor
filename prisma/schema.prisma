@@ -1,0 +1,11 @@
+// Phase 1 establishes Prisma connectivity only. The actual data model
+// (users, profiles, listings, applications, ...) is defined in Phase 2
+// per docs/database_schema_and_prisma_models.md and docs/master_implementation_blueprint.md §8.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  DATABASE_URL: 'postgresql://amr_tutor:amr_tutor@localhost:5432/amr_tutor?schema=public'
+  NODE_ENV: 'test'
+  PORT: 4000
+  API_PREFIX: 'api/v1'
+  CORS_ORIGIN: 'http://localhost:3000'
+  NEXT_PUBLIC_API_URL: 'http://localhost:4000/api/v1'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: amr_tutor
+          POSTGRES_PASSWORD: amr_tutor
+          POSTGRES_DB: amr_tutor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U amr_tutor -d amr_tutor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Write CI .env
+        run: |
+          cat <<EOF > .env
+          DATABASE_URL=${DATABASE_URL}
+          NODE_ENV=${NODE_ENV}
+          PORT=${PORT}
+          API_PREFIX=${API_PREFIX}
+          CORS_ORIGIN=${CORS_ORIGIN}
+          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+          EOF
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Validate Prisma schema
+        run: pnpm exec prisma validate --schema prisma/schema.prisma
+
+      - name: Apply database migrations
+        run: pnpm run db:migrate:deploy
+
+      - name: Unit tests
+        run: pnpm run test
+
+      - name: API integration tests
+        run: pnpm --filter api run test:e2e
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Start API for web e2e tests
+        run: |
+          pnpm --filter api run start &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4000/api/v1/health && exit 0
+            sleep 1
+          done
+          echo "API did not become healthy in time" >&2
+          exit 1
+
+      - name: Web end-to-end tests
+        run: pnpm run test:e2e

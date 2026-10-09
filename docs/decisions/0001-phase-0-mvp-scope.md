@@ -1,6 +1,6 @@
 # Decision Record 0001 — Phase 0 MVP Scope and Product Decisions
 
-**Status:** Draft — pending confirmation
+**Status:** Final
 **Date:** 2026-10-09
 **Phase:** Phase 0 (Master Implementation Blueprint, §6)
 **Supersedes:** None
@@ -9,7 +9,7 @@
 
 This record finalizes the Phase 0 decisions required before implementation begins. It resolves every item in the blueprint's §6.1 decision table, classifies data by privacy category, documents the core entity states, and lists what is explicitly out of scope for the first release.
 
-Each decision below is a recommendation based on the blueprint, PRD, and TRD. Items marked **[CONFIRM]** are the ones most likely to need your input before Phase 1 starts — everything else follows the blueprint's own recommended defaults and can be revisited later without much rework.
+Items 10 and 11 below were confirmed directly; every other decision follows the blueprint's own recommended defaults.
 
 ---
 
@@ -34,8 +34,8 @@ No payments, commissions, wallets, AI matching, reviews, or native apps in this 
 | 7 | Application uniqueness | One application per tutor per listing, enforced by a DB unique constraint on `(tutorId, listingId)`. | Matches blueprint §8.3 and §14 concurrency requirements. |
 | 8 | Contact sharing | Explicit, logged consent from both parties before private contact info (phone/email) is exchanged. Server-enforced; never inferred from an application status change alone. | Matches blueprint Principle 4 and Phase 9 scope. |
 | 9 | Student verification | **Optional** for MVP. Not required to browse, apply, publish, or message. Peer/university-affiliation verification per PRD §5.3, implemented in Phase 10, after the core journey works. | Matches blueprint §16 ("after the main marketplace works unless essential to launch policy") — nothing in PRD marks it launch-blocking. |
-| 10 | Listing moderation | **[CONFIRM]** Recommended: pre-publish automated checks (profanity/contact-info-in-text filter, required-field completeness) + post-publish reactive moderation via user reports. No manual pre-approval queue for every listing at launch — manual review only for reported listings. | Balances trust/safety against launch velocity. PRD lists `Pending Review` as a listing status, which this decision keeps available for manual escalation, but doesn't make it the default path. |
-| 11 | Geographic scope | **[CONFIRM]** Recommended: launch in Dhaka only (by area/thana), with the location data model (Division → District → Area) built to extend nationally without a schema change. | No specific launch city is named in PRD/TRD; Dhaka is the largest and most liquid market for this use case. Confirm if a different city is intended. |
+| 10 | Listing moderation | **Confirmed.** Every listing goes through mandatory pre-publish admin review. A guardian submits a listing (`DRAFT → PENDING_REVIEW`); it only reaches `PUBLISHED` after an admin approves it. An admin may `REJECT` it back to the guardian with a reason, or editing and resubmitting returns it to `PENDING_REVIEW`. Automated pre-checks (profanity/contact-info-in-text filter, required-field completeness) still run first to triage the queue, but they assist the admin decision — they never auto-publish or auto-reject on their own. | User instruction: "final call should be admin's." Automated checks are kept as a queue-triage aid only, consistent with Principle 2 (the backend/admin owns business rules, not an automated heuristic). |
+| 11 | Geographic scope | **Confirmed.** All of Bangladesh's administrative divisions (Dhaka, Chittagong, Sylhet, Rajshahi, Khulna, Barisal, Rangpur, Mymensingh) are enabled at launch, using the Division → District → Area location hierarchy. Dhaka is the default/pre-selected division in search and profile/listing location pickers, but any user can manually switch to another division, district, or area. | User instruction: Dhaka as default, but users can manually select other divisions. No schema distinction between "launch" and "future" divisions is needed since all are enabled from day one. |
 | 12 | Payment | Out of scope. No listing visibility, application limits, or feature gating tied to payment. | Matches blueprint §1.2 and §22. |
 | 13 | Reviews and ratings | Deferred. No public ratings in MVP. | Matches blueprint §22; PRD §5.9 requires an abuse-resistant policy first, which doesn't exist yet. |
 | 14 | Real-time messaging | Persisted messaging with short-interval polling (e.g., 10–15s) for new messages at launch. WebSockets added later only if polling proves insufficient. | Matches blueprint §9 ("begin with reliable persisted messaging and polling") and TRD §"Begin with REST-based message retrieval... Add WebSockets only when real-time messaging becomes a clear user requirement." |
@@ -47,9 +47,12 @@ No payments, commissions, wallets, AI matching, reviews, or native apps in this 
 ## 4. Core entity states
 
 ### 4.1 Tuition Listing
-`DRAFT → PENDING_REVIEW (optional, reported/flagged only) → PUBLISHED → PAUSED ⇄ PUBLISHED → FILLED / CLOSED`
-Also: `REJECTED` (from `PENDING_REVIEW`, moderation only).
+`DRAFT → PENDING_REVIEW → PUBLISHED → PAUSED ⇄ PUBLISHED → FILLED / CLOSED`
+Also: `REJECTED` (from `PENDING_REVIEW`, admin decision; guardian may edit and resubmit to `PENDING_REVIEW`).
 
+- Submitting a draft (`DRAFT → PENDING_REVIEW`) is the only way to request publication — there is no direct `DRAFT → PUBLISHED` or guardian-triggered publish.
+- Only an admin action moves a listing from `PENDING_REVIEW` to `PUBLISHED` or `REJECTED`.
+- A `PUBLISHED` listing a guardian edits in a way that affects public content returns to `PENDING_REVIEW` before the change goes live (exact field list to be finalized in Phase 7).
 - Only `PUBLISHED` listings appear in public search.
 - `CLOSED`/`FILLED` listings keep historical applications readable to their original parties.
 
@@ -117,14 +120,7 @@ No separate diagram file is created in Phase 0; each journey's states are implem
 - [x] Listing, application, verification, conversation, report states documented (§4)
 - [x] Contact-sharing policy agreed (§3 item 8, §5)
 - [x] Out-of-scope features listed (§6)
-- [ ] **[CONFIRM]** Launch geography (§3 item 11) — defaulted to Dhaka
-- [ ] **[CONFIRM]** Moderation policy for publish (§3 item 10) — defaulted to reactive/report-based
+- [x] Launch geography confirmed (§3 item 11) — all divisions enabled, Dhaka default
+- [x] Moderation policy for publish confirmed (§3 item 10) — mandatory admin pre-publish review
 
----
-
-## 9. Open items requiring your confirmation
-
-1. **Launch city/area** — proceed with Dhaka-only, or a different city/region?
-2. **Pre-publish moderation** — reactive (report-based) as drafted, or require manual approval before every listing goes live?
-
-Everything else in this record is safe to proceed on as written; it mirrors the blueprint's own recommended defaults. Once you confirm (or amend) items 1–2, this record is final and Phase 1 (repository + dev environment) can start.
+All Phase 0 items are resolved. Phase 1 (repository + dev environment) can start.

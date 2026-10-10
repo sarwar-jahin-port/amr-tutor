@@ -85,6 +85,26 @@ class EnvironmentVariables {
   @IsOptional()
   @IsBoolean()
   EVIDENCE_S3_FORCE_PATH_STYLE: boolean = true;
+
+  /**
+   * Overrides for the auth-route rate limiter (AuthController's /register
+   * and /login — see app.module.ts's ThrottlerModule). Unset in normal
+   * operation, which keeps the strict production default (5 requests per
+   * 60s per IP, enforced by test/auth-rate-limit.e2e-spec.ts). Only meant
+   * to be exported as real process env vars — not written into .env — for
+   * the one long-running API process the Playwright web e2e suite talks
+   * to, since those journeys legitimately register/log in several
+   * accounts per run and aren't testing the rate limiter itself.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1000)
+  AUTH_RATE_LIMIT_TTL_MS?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  AUTH_RATE_LIMIT_MAX?: number;
 }
 
 /**

@@ -93,8 +93,15 @@ jobs:
         run: pnpm --filter web exec playwright install --with-deps chromium
 
       - name: Start API for web e2e tests
+        # AUTH_RATE_LIMIT_MAX/TTL are overridden here only, as real env vars
+        # (not written into .env) — this is the one API process the
+        # Playwright journeys talk to, and they legitimately register/log
+        # in several real accounts per journey. The earlier "API
+        # integration tests" step runs against the unmodified .env, so
+        # test/auth-rate-limit.e2e-spec.ts still validates the strict
+        # production default (5 requests/60s).
         run: |
-          pnpm --filter api run start &
+          AUTH_RATE_LIMIT_MAX=1000 AUTH_RATE_LIMIT_TTL_MS=60000 pnpm --filter api run start &
           for i in $(seq 1 30); do
             curl -sf http://localhost:4000/api/v1/health && exit 0
             sleep 1

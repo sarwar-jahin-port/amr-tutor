@@ -1,4 +1,5 @@
 import { CircleCheck, HandHeart, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,14 +57,14 @@ export default async function HomePage() {
 
       <main>
         {/* Hero */}
-        <Container className="grid gap-10 py-12 md:grid-cols-2 md:items-center md:py-20">
-          <div className="flex flex-col gap-6">
+        <Container className="grid gap-10 py-12 md:grid-cols-2 md:items-stretch md:py-20">
+          <div className="flex flex-col justify-center gap-6">
             <h1 className="text-4xl font-semibold tracking-tight text-ink md:text-5xl">
-              Good teaching starts with the right connection.
+              The only tuition platform in Bangladesh that never takes a cut.
             </h1>
             <p className="max-w-md text-lg text-ink-secondary">
-              Find a home tutor or discover tuition opportunities. Connect directly, without a
-              tuition-matching commission.
+              Guardians and tutors find each other directly — no agents, no commissions, no hidden
+              fees. Just a trusted place to connect and agree on your own terms.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg">
@@ -75,23 +76,15 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* The "learning line": a functional signature element, not decoration (ui-ux.md §3). */}
-          <div className="rounded-2xl border border-border bg-surface p-8">
-            <p className="mb-6 text-sm font-medium text-ink-secondary">A tuition opportunity, at a glance</p>
-            <ol className="flex flex-col gap-0">
-              {['Class 9', 'Mathematics', '3 days/week', 'Nearby area'].map((step, index, arr) => (
-                <li key={step} className="relative flex items-center gap-4 pb-6 last:pb-0">
-                  {index < arr.length - 1 && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute left-[7px] top-4 h-full w-px bg-primary/30"
-                    />
-                  )}
-                  <span className="relative z-10 size-[15px] shrink-0 rounded-full border-2 border-primary bg-surface" />
-                  <span className="text-lg font-medium text-ink">{step}</span>
-                </li>
-              ))}
-            </ol>
+          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border md:aspect-auto">
+            <Image
+              src="/images/hero-tutor-guardian.webp"
+              alt="A guardian and a tutor shaking hands while a smiling student looks on"
+              fill
+              priority
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover object-[72%_35%]"
+            />
           </div>
         </Container>
 

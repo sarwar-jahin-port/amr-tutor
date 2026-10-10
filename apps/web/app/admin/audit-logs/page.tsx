@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Container } from '@/components/ui/container';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
 import { getAuditLogs } from '@/features/admin/audit-api';
 import type { AuditLogEntry } from '@/features/admin/types';
@@ -40,39 +38,39 @@ export default function AdminAuditLogsPage() {
   if (status === 'loading' || (status === 'authenticated' && isAdmin && logs === undefined)) {
     return (
       <>
-        <SiteHeader />
-        <Container as="main" narrow className="flex flex-col gap-4 py-16">
+        
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto py-8">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-32 w-full" />
-        </Container>
+        </div>
       </>
     );
   }
 
   if (status === 'unauthenticated' || !user) {
     return (
-      <Container as="main" className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-ink-secondary">Redirecting to log in…</p>
-      </Container>
+      </div>
     );
   }
 
   if (!isAdmin) {
     return (
       <>
-        <SiteHeader />
-        <Container as="main" narrow className="flex flex-col gap-4 py-16">
+        
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto py-8">
           <h1 className="text-3xl font-semibold tracking-tight text-ink">Audit logs</h1>
           <p className="text-ink-secondary">Your account doesn&apos;t have admin access.</p>
-        </Container>
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <SiteHeader />
-      <Container as="main" narrow className="flex flex-col gap-6 py-16">
+      
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto py-8">
         <h1 className="text-3xl font-semibold tracking-tight text-ink">Audit logs</h1>
 
         {logs && logs.length === 0 ? (
@@ -94,7 +92,7 @@ export default function AdminAuditLogsPage() {
             ))}
           </div>
         )}
-      </Container>
+      </div>
     </>
   );
 }

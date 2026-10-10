@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Container } from '@/components/ui/container';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
-import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
 import { searchUsers, updateUserStatus } from '@/features/admin/users-api';
 import type { AdminUser } from '@/features/admin/types';
@@ -135,39 +133,39 @@ export default function AdminUsersPage() {
   if (status === 'loading' || (status === 'authenticated' && isAdmin && users === undefined)) {
     return (
       <>
-        <SiteHeader />
-        <Container as="main" narrow className="flex flex-col gap-4 py-16">
+        
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto py-8">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-20 w-full" />
-        </Container>
+        </div>
       </>
     );
   }
 
   if (status === 'unauthenticated' || !user) {
     return (
-      <Container as="main" className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-ink-secondary">Redirecting to log in…</p>
-      </Container>
+      </div>
     );
   }
 
   if (!isAdmin) {
     return (
       <>
-        <SiteHeader />
-        <Container as="main" narrow className="flex flex-col gap-4 py-16">
+        
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto py-8">
           <h1 className="text-3xl font-semibold tracking-tight text-ink">Users</h1>
           <p className="text-ink-secondary">Your account doesn&apos;t have admin access.</p>
-        </Container>
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <SiteHeader />
-      <Container as="main" narrow className="flex flex-col gap-6 py-16">
+      
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto py-8">
         <h1 className="text-3xl font-semibold tracking-tight text-ink">Users</h1>
 
         <Field className="flex-row gap-2">
@@ -189,7 +187,7 @@ export default function AdminUsersPage() {
             />
           ))}
         </div>
-      </Container>
+      </div>
     </>
   );
 }

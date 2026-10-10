@@ -4,12 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Container } from '@/components/ui/container';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
-import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
 import { decideVerification, getEvidenceDownloadUrl, getVerificationQueue } from '@/features/verifications/api';
 import { VERIFICATION_STATUS_BADGE, VERIFICATION_STATUS_LABEL, VERIFICATION_TYPE_LABEL, formatFileSize } from '@/features/verifications/format';
@@ -139,39 +137,39 @@ export default function AdminVerificationsPage() {
   if (status === 'loading' || (status === 'authenticated' && isReviewer && requests === undefined)) {
     return (
       <>
-        <SiteHeader />
-        <Container as="main" narrow className="flex flex-col gap-4 py-16">
+        
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto py-8">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-40 w-full" />
-        </Container>
+        </div>
       </>
     );
   }
 
   if (status === 'unauthenticated' || !user) {
     return (
-      <Container as="main" className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-ink-secondary">Redirecting to log in…</p>
-      </Container>
+      </div>
     );
   }
 
   if (!isReviewer) {
     return (
       <>
-        <SiteHeader />
-        <Container as="main" narrow className="flex flex-col gap-4 py-16">
+        
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto py-8">
           <h1 className="text-3xl font-semibold tracking-tight text-ink">Verification queue</h1>
           <p className="text-ink-secondary">Your account doesn&apos;t have reviewer access.</p>
-        </Container>
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <SiteHeader />
-      <Container as="main" narrow className="flex flex-col gap-6 py-16">
+      
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto py-8">
         <h1 className="text-3xl font-semibold tracking-tight text-ink">Verification queue</h1>
 
         {requests && requests.length === 0 ? (
@@ -187,7 +185,7 @@ export default function AdminVerificationsPage() {
             ))}
           </div>
         )}
-      </Container>
+      </div>
     </>
   );
 }

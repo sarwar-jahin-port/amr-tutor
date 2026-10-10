@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ListingStatus } from '@prisma/client';
-import { PaginatedResponse, PaginationQueryDto, paginate } from '../../common/dto/pagination-query.dto';
+import { PaginatedResponse, SearchQueryDto, paginate } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit-log.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -29,9 +29,13 @@ export class AdminListingsService {
 
   async listQueue(
     status: ListingStatus | undefined,
-    query: PaginationQueryDto,
+    query: SearchQueryDto,
   ): Promise<PaginatedResponse<PublicListingDetailDto>> {
-    const where = { status: status ?? 'PENDING_REVIEW' };
+    const where: any = {};
+    if (status) where.status = status;
+    if (query.search) {
+      where.title = { contains: query.search, mode: 'insensitive' };
+    }
 
     const [rows, total] = await Promise.all([
       this.prisma.tuitionListing.findMany({

@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
@@ -12,6 +13,7 @@ const PASSWORD = 'StrongPassword123!';
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let jwt: JwtService;
   const createdUserIds: string[] = [];
 
   beforeAll(async () => {
@@ -33,6 +35,7 @@ describe('Auth (e2e)', () => {
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
+    jwt = moduleFixture.get(JwtService);
   });
 
   afterAll(async () => {
@@ -170,6 +173,16 @@ describe('Auth (e2e)', () => {
 
       expect(res.body.data.email).toBe(email);
     });
+
+    it('rejects an access token that has already expired', async () => {
+      const { id } = await registerUser();
+      const expiredToken = jwt.sign({ sub: id, roles: ['TUTOR'] }, { expiresIn: -10 });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect(401);
+    });
   });
 
   describe('POST /auth/refresh and /auth/logout', () => {
@@ -208,6 +221,27 @@ describe('Auth (e2e)', () => {
         .post('/api/v1/auth/refresh')
         .set('Cookie', `refresh_token=${secondRefreshCookie}`)
         .expect(401);
+    });
+
+    it('rejects a refresh call once the stored session has expired', async () => {
+      const { email } = await registerUser();
+      const login = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({ email, password: PASSWORD })
+        .expect(200);
+
+      const refreshCookie = extractCookie(login, 'refresh_token');
+      await prisma.refreshToken.updateMany({
+        where: { user: { email } },
+        data: { expiresAt: new Date(Date.now() - 1000) },
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', `refresh_token=${refreshCookie}`)
+        .expect(401);
+
+      expect(res.body.message).toMatch(/expired/i);
     });
 
     it('logout revokes the refresh session', async () => {

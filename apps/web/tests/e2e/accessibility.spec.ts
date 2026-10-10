@@ -119,24 +119,21 @@ test.describe('viewports', () => {
     await expect(page.getByRole('link', { name: 'Create account' })).toBeVisible();
   });
 
-  // KNOWN GAP (not a test-authoring issue): SiteHeader's public nav links
-  // ("Find tuition", "Find tutors", "How it works" — components/site-header.tsx)
-  // are `hidden md:flex` with no mobile replacement (no hamburger/drawer
-  // menu). Below md breakpoint they are not just visually hidden but
-  // genuinely unreachable from the header — a real mobile-navigation gap
-  // per blueprint §19.4's "narrow mobile viewport" requirement. This test
-  // documents the current behavior rather than asserting a false pass;
-  // see docs/decisions/0003-phase-13-testing-strategy.md for the tracked
-  // follow-up.
-  test('public nav links are not reachable from the header below the md breakpoint (documented gap)', async ({
-    page,
-  }) => {
+  test('public nav links are reachable from the header below the md breakpoint', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/');
 
-    await expect(page.getByRole('link', { name: 'Find tuition' }).first()).not.toBeVisible();
-    await expect(page.getByRole('link', { name: 'Find tutors' })).not.toBeVisible();
-    await expect(page.getByRole('link', { name: 'How it works' })).not.toBeVisible();
+    const header = page.locator('header');
+    for (const label of ['Find tuition', 'Find tutors', 'How it works']) {
+      await expect(header.getByRole('link', { name: label })).toBeHidden();
+    }
+
+    await page.getByRole('button', { name: 'Open menu' }).click();
+
+    const menu = page.getByRole('dialog', { name: 'Menu' });
+    for (const label of ['Find tuition', 'Find tutors', 'How it works']) {
+      await expect(menu.getByRole('link', { name: label })).toBeVisible();
+    }
   });
 });
 
@@ -148,7 +145,7 @@ test('respects a reduced-motion preference', async ({ page }) => {
   // `prefers-reduced-motion: reduce` (no broken layout from an animation
   // library that assumes motion is always allowed).
   await expect(
-    page.getByRole('heading', { name: 'Good teaching starts with the right connection.' }),
+    page.getByRole('heading', { name: 'The only tuition platform in Bangladesh that never takes a cut.' }),
   ).toBeVisible();
 });
 

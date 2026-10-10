@@ -1,5 +1,7 @@
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { Container } from '@/components/ui/container';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { AuthNav } from '@/features/auth/auth-nav';
 
 const NAV_LINKS = [
@@ -23,7 +25,32 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <AuthNav />
+        <div className="flex items-center gap-2">
+          <AuthNav />
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="flex size-9 items-center justify-center rounded-lg text-ink-secondary transition-colors duration-fast hover:bg-soft-green hover:text-ink md:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="size-5" aria-hidden="true" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetTitle>Menu</SheetTitle>
+              <nav className="mt-4 flex flex-col gap-4 text-sm font-medium text-ink">
+                {NAV_LINKS.map((link) => (
+                  <SheetClose asChild key={link.href}>
+                    <Link href={link.href} className="hover:text-primary">
+                      {link.label}
+                    </Link>
+                  </SheetClose>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </Container>
     </header>
   );

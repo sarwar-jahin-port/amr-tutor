@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/site-header';
 import {
   getCurricula,
   getGrades,
+  getListing,
   getLocations,
   getSubjects,
   getUniversities,
@@ -15,8 +16,11 @@ import {
 import { ClearFiltersLink } from '@/features/marketplace/clear-filters-link';
 import { FilterSheet } from '@/features/marketplace/filter-sheet';
 import { ListingFilters } from '@/features/marketplace/listing-filters';
-import { ListingResultCard } from '@/features/marketplace/listing-result-card';
 import { SearchPagination } from '@/features/marketplace/search-pagination';
+import { TuitionOpportunityCard } from '@/features/marketplace/tuition-opportunity-card';
+import { TuitionOpportunityRow } from '@/features/marketplace/tuition-opportunity-row';
+import type { ListingDetail } from '@/features/marketplace/types';
+import { ViewToggle } from '@/features/marketplace/view-toggle';
 
 export const metadata: Metadata = {
   title: 'Find tuition — AMR Tutor',
@@ -62,6 +66,14 @@ export default async function TuitionPage({ searchParams }: TuitionPageProps) {
   ]);
 
   const filterProps = { subjects, grades, curricula, universities, divisions };
+  const view = first(params.view) === 'row' ? 'row' : 'card';
+
+  const listings =
+    results.status === 'ok'
+      ? (await Promise.all(results.data.map((listing) => getListing(listing.id))))
+          .map((result) => (result.status === 'ok' ? result.data : null))
+          .filter((listing): listing is ListingDetail => listing !== null)
+      : [];
 
   return (
     <>
@@ -79,14 +91,14 @@ export default async function TuitionPage({ searchParams }: TuitionPageProps) {
           </FilterSheet>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-[260px_1fr]">
-          <aside className="hidden flex-col gap-5 md:flex">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[260px_1fr]">
+          <aside className="hidden max-h-[calc(100vh-6rem)] flex-col gap-5 overflow-y-auto md:sticky md:top-20 md:flex">
             <ListingFilters {...filterProps} />
             <ClearFiltersLink />
           </aside>
 
-          <div className="flex flex-col gap-6">
-            {results.status === 'error' && (
+          <div className="flex min-w-0 flex-col gap-6">
+            {(results.status === 'error' || (results.status === 'ok' && results.data.length > 0 && listings.length === 0)) && (
               <Alert variant="danger" title="We couldn't load this page">
                 Your internet connection may be interrupted. Try again.
               </Alert>
@@ -101,14 +113,39 @@ export default async function TuitionPage({ searchParams }: TuitionPageProps) {
               />
             )}
 
-            {results.status === 'ok' && results.data.length > 0 && (
+            {results.status === 'ok' && listings.length > 0 && (
               <>
-                <p className="text-sm text-ink-secondary">{results.meta.total} opportunities found</p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {results.data.map((listing) => (
-                    <ListingResultCard key={listing.id} listing={listing} />
-                  ))}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-ink-secondary">{results.meta.total} opportunities found</p>
+                  <ViewToggle view={view} />
                 </div>
+
+                {view === 'card' ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {listings.map((listing, index) => (
+                      <div
+                        key={listing.id}
+                        className="animate-fade-up"
+                        style={{ animationDelay: `${Math.min(index * 40, 320)}ms` }}
+                      >
+                        <TuitionOpportunityCard listing={listing} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {listings.map((listing, index) => (
+                      <div
+                        key={listing.id}
+                        className="animate-fade-up"
+                        style={{ animationDelay: `${Math.min(index * 40, 320)}ms` }}
+                      >
+                        <TuitionOpportunityRow listing={listing} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <SearchPagination page={page} limit={results.meta.limit} total={results.meta.total} />
               </>
             )}

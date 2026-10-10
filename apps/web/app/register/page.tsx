@@ -12,6 +12,7 @@ import { Checkbox, CheckboxLabel } from '@/components/ui/checkbox';
 import { Container } from '@/components/ui/container';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input, PasswordInput, PhoneInput } from '@/components/ui/input';
+import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
 
 const registerSchema = z.object({
@@ -63,92 +64,100 @@ export default function RegisterPage() {
   };
 
   return (
-    <Container as="main" narrow className="flex min-h-screen flex-col justify-center gap-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">Create an account</h1>
+    <>
+      <SiteHeader />
+      <Container as="main" narrow className="flex min-h-[80vh] flex-col justify-center gap-6 py-16">
+        <div className="flex flex-col gap-6 rounded-2xl border border-border bg-surface p-8 shadow-sm">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold tracking-tight text-ink">Create an account</h1>
+            <p className="text-sm text-ink-secondary">Free, no commissions — for guardians and tutors.</p>
+          </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            aria-invalid={!!errors.email || undefined}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            {...register('email')}
-          />
-          <FieldError id="email-error">{errors.email?.message}</FieldError>
-        </Field>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={!!errors.email || undefined}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                {...register('email')}
+              />
+              <FieldError id="email-error">{errors.email?.message}</FieldError>
+            </Field>
 
-        <Field>
-          <FieldLabel htmlFor="phone">Phone (optional)</FieldLabel>
-          <PhoneInput
-            id="phone"
-            aria-invalid={!!errors.phone || undefined}
-            aria-describedby={errors.phone ? 'phone-error' : undefined}
-            {...register('phone')}
-          />
-          <FieldError id="phone-error">{errors.phone?.message}</FieldError>
-        </Field>
+            <Field>
+              <FieldLabel htmlFor="phone">Phone (optional)</FieldLabel>
+              <PhoneInput
+                id="phone"
+                aria-invalid={!!errors.phone || undefined}
+                aria-describedby={errors.phone ? 'phone-error' : undefined}
+                {...register('phone')}
+              />
+              <FieldError id="phone-error">{errors.phone?.message}</FieldError>
+            </Field>
 
-        <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <PasswordInput
-            id="password"
-            autoComplete="new-password"
-            aria-invalid={!!errors.password || undefined}
-            aria-describedby={errors.password ? 'password-error' : undefined}
-            {...register('password')}
-          />
-          <FieldError id="password-error">{errors.password?.message}</FieldError>
-        </Field>
+            <Field>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <PasswordInput
+                id="password"
+                autoComplete="new-password"
+                aria-invalid={!!errors.password || undefined}
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                {...register('password')}
+              />
+              <FieldError id="password-error">{errors.password?.message}</FieldError>
+            </Field>
 
-        <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-medium text-ink">I am a…</legend>
-          <Controller
-            name="roles"
-            control={control}
-            render={({ field }) => (
-              <>
-                {ROLE_OPTIONS.map((role) => {
-                  const id = `role-${role.value.toLowerCase()}`;
-                  const checked = field.value.includes(role.value);
-                  return (
-                    <div key={role.value} className="flex items-center gap-2">
-                      <Checkbox
-                        id={id}
-                        checked={checked}
-                        onCheckedChange={(next) => {
-                          field.onChange(
-                            next
-                              ? [...field.value, role.value]
-                              : field.value.filter((r) => r !== role.value),
-                          );
-                        }}
-                      />
-                      <CheckboxLabel htmlFor={id}>{role.label}</CheckboxLabel>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          />
-          <FieldError>{errors.roles?.message}</FieldError>
-        </fieldset>
+            <fieldset className="flex flex-col gap-3">
+              <legend className="text-sm font-medium text-ink">I am a…</legend>
+              <Controller
+                name="roles"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    {ROLE_OPTIONS.map((role) => {
+                      const id = `role-${role.value.toLowerCase()}`;
+                      const checked = field.value.includes(role.value);
+                      return (
+                        <div key={role.value} className="flex items-center gap-2">
+                          <Checkbox
+                            id={id}
+                            checked={checked}
+                            onCheckedChange={(next) => {
+                              field.onChange(
+                                next
+                                  ? [...field.value, role.value]
+                                  : field.value.filter((r) => r !== role.value),
+                              );
+                            }}
+                          />
+                          <CheckboxLabel htmlFor={id}>{role.label}</CheckboxLabel>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              />
+              <FieldError>{errors.roles?.message}</FieldError>
+            </fieldset>
 
-        {formError && <Alert variant="danger">{formError}</Alert>}
+            {formError && <Alert variant="danger">{formError}</Alert>}
 
-        <Button type="submit" isLoading={isSubmitting}>
-          {isSubmitting ? 'Creating account…' : 'Register'}
-        </Button>
-      </form>
+            <Button type="submit" size="lg" isLoading={isSubmitting}>
+              {isSubmitting ? 'Creating account…' : 'Register'}
+            </Button>
+          </form>
+        </div>
 
-      <p className="text-sm text-ink-secondary">
-        Already have an account?{' '}
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Log in
-        </Link>
-      </p>
-    </Container>
+        <p className="text-center text-sm text-ink-secondary">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Log in
+          </Link>
+        </p>
+      </Container>
+    </>
   );
 }

@@ -22,6 +22,9 @@ const notoSansBengali = Noto_Sans_Bengali({
 export const metadata: Metadata = {
   title: 'AMR Tutor — Free Home Tuition Marketplace',
   description: 'Connecting Bangladeshi parents and tutors directly, free of charge.',
+  icons: {
+    icon: '/images/logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

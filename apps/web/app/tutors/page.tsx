@@ -16,7 +16,9 @@ import { ClearFiltersLink } from '@/features/marketplace/clear-filters-link';
 import { FilterSheet } from '@/features/marketplace/filter-sheet';
 import { SearchPagination } from '@/features/marketplace/search-pagination';
 import { TutorFilters } from '@/features/marketplace/tutor-filters';
-import { TutorResultCard } from '@/features/marketplace/tutor-result-card';
+import { TutorSpotlightCard } from '@/features/marketplace/tutor-spotlight-card';
+import { TutorSpotlightRow } from '@/features/marketplace/tutor-spotlight-row';
+import { ViewToggle } from '@/features/marketplace/view-toggle';
 
 export const metadata: Metadata = {
   title: 'Find a tutor — AMR Tutor',
@@ -53,6 +55,7 @@ export default async function TutorsPage({ searchParams }: TutorsPageProps) {
   ]);
 
   const filterProps = { subjects, grades, curricula, universities, divisions };
+  const view = first(params.view) === 'row' ? 'row' : 'card';
 
   return (
     <>
@@ -70,13 +73,13 @@ export default async function TutorsPage({ searchParams }: TutorsPageProps) {
           </FilterSheet>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-[260px_1fr]">
-          <aside className="hidden flex-col gap-5 md:flex">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[260px_1fr]">
+          <aside className="hidden max-h-[calc(100vh-6rem)] flex-col gap-5 overflow-y-auto md:sticky md:top-20 md:flex">
             <TutorFilters {...filterProps} />
             <ClearFiltersLink />
           </aside>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex min-w-0 flex-col gap-6">
             {results.status === 'error' && (
               <Alert variant="danger" title="We couldn't load this page">
                 Your internet connection may be interrupted. Try again.
@@ -94,12 +97,37 @@ export default async function TutorsPage({ searchParams }: TutorsPageProps) {
 
             {results.status === 'ok' && results.data.length > 0 && (
               <>
-                <p className="text-sm text-ink-secondary">{results.meta.total} tutors found</p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {results.data.map((tutor) => (
-                    <TutorResultCard key={tutor.id} tutor={tutor} />
-                  ))}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-ink-secondary">{results.meta.total} tutors found</p>
+                  <ViewToggle view={view} />
                 </div>
+
+                {view === 'card' ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {results.data.map((tutor, index) => (
+                      <div
+                        key={tutor.id}
+                        className="animate-fade-up"
+                        style={{ animationDelay: `${Math.min(index * 40, 320)}ms` }}
+                      >
+                        <TutorSpotlightCard tutor={tutor} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {results.data.map((tutor, index) => (
+                      <div
+                        key={tutor.id}
+                        className="animate-fade-up"
+                        style={{ animationDelay: `${Math.min(index * 40, 320)}ms` }}
+                      >
+                        <TutorSpotlightRow tutor={tutor} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <SearchPagination page={page} limit={results.meta.limit} total={results.meta.total} />
               </>
             )}

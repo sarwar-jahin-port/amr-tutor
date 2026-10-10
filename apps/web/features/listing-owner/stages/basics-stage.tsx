@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { CheckboxGrid } from '@/components/checkbox-grid';
+import { TagMultiSelect } from '@/components/tag-multi-select';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -177,7 +177,13 @@ export function BasicsStage({
         </Field>
       </div>
 
-      <CheckboxGrid legend="Subjects" options={subjects} selected={subjectIds} onChange={setSubjectIds} />
+      <TagMultiSelect
+        legend="Subjects"
+        options={subjects}
+        selected={subjectIds}
+        onChange={setSubjectIds}
+        placeholder="Search subjects…"
+      />
       {subjectsError && <p className="text-sm text-danger">{subjectsError}</p>}
 
       {formError && <Alert variant="danger">{formError}</Alert>}

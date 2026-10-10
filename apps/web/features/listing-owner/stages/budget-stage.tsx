@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { CheckboxGrid } from '@/components/checkbox-grid';
+import { TagMultiSelect } from '@/components/tag-multi-select';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -123,11 +123,12 @@ export function BudgetStage({
         </Select>
       </Field>
 
-      <CheckboxGrid
+      <TagMultiSelect
         legend="Preferred university (optional)"
         options={universities}
         selected={universityIds}
         onChange={setUniversityIds}
+        placeholder="Search universities…"
       />
 
       {formError && <Alert variant="danger">{formError}</Alert>}

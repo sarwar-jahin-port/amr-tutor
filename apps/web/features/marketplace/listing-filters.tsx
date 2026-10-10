@@ -1,13 +1,8 @@
 import type { Division, ReferenceItem } from './types';
 import { BudgetFilter } from './budget-filter';
+import { TEACHING_MODE_OPTIONS } from './format';
 import { SelectFilter } from './select-filter';
 import { TextFilter } from './text-filter';
-
-const TEACHING_MODE_OPTIONS: ReferenceItem[] = [
-  { id: 'HOME', name: "At the student's home" },
-  { id: 'ONLINE', name: 'Online' },
-  { id: 'BOTH', name: 'Either' },
-];
 
 const DAYS_PER_WEEK_OPTIONS: ReferenceItem[] = Array.from({ length: 7 }, (_, i) => ({
   id: String(i + 1),

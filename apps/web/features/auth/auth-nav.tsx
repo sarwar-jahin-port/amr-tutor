@@ -27,18 +27,18 @@ export function AuthNav() {
   }
 
   return (
-    <nav className="flex items-center gap-3 text-sm font-medium">
-      <span className="hidden text-ink-secondary sm:inline">
+    <nav className="flex items-center gap-2 text-sm font-medium sm:gap-3">
+      <span className="hidden text-ink-secondary lg:inline">
         {user.email} ({user.roles.join(', ')})
       </span>
-      <Link href="/messages" className="text-ink hover:text-primary">
+      <Link href="/messages" className="hidden text-ink hover:text-primary md:inline">
         Messages
       </Link>
-      <Link href="/dashboard" className="text-ink hover:text-primary">
+      <Link href="/dashboard" className="hidden text-ink hover:text-primary md:inline">
         Dashboard
       </Link>
       <NotificationBell />
-      <Button variant="secondary" size="sm" onClick={() => void logout()}>
+      <Button variant="secondary" size="sm" onClick={() => void logout()} className="hidden md:inline-flex">
         Log out
       </Button>
     </nav>

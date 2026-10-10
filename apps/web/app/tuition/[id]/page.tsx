@@ -1,14 +1,37 @@
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { BookOpen, Calendar, GraduationCap, Home, Languages, MapPin, SlidersHorizontal, Users } from 'lucide-react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Container } from '@/components/ui/container';
 import { SiteHeader } from '@/components/site-header';
 import { ApplySection } from '@/features/applications/apply-section';
+import { Fact } from '@/features/marketplace/fact';
 import { getListing } from '@/features/marketplace/api';
-import { formatMinutes, formatSalaryRange, TEACHING_MODE_LABEL, WEEKDAY_LABEL } from '@/features/marketplace/format';
+import {
+  formatMinutes,
+  formatSalaryRange,
+  GENDER_PREFERENCE_LABEL,
+  TEACHING_MODE_LABEL,
+  WEEKDAY_LABEL,
+  WEEKDAY_ORDER,
+} from '@/features/marketplace/format';
+import { cn } from '@/lib/cn';
 import { ReportDialog } from '@/features/reports/report-dialog';
+
+/** Icon-labeled section wrapper — mirrors the tutor profile page so both read the same way. */
+function DetailSection({ title, icon: Icon, children }: { title: string; icon: typeof BookOpen; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6">
+      <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+        <Icon className="size-4 text-primary" aria-hidden="true" />
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
 
 interface ListingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -32,7 +55,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   return (
     <>
       <SiteHeader />
-      <Container as="main" narrow className="flex flex-col gap-8 py-10">
+      <Container as="main" className="py-10 lg:py-14">
         {result.status === 'error' && (
           <Alert variant="danger" title="We couldn't load this page">
             Your internet connection may be interrupted. Try again.
@@ -40,102 +63,126 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         )}
 
         {result.status === 'ok' && (
-          <>
-            {/* First: essential facts */}
-            <div className="flex flex-col gap-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-ink">{result.data.title}</h1>
-
-              {result.data.subjects.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {result.data.subjects.map((subject) => (
-                    <Badge key={subject.id} variant="neutral">
-                      {subject.name}
-                    </Badge>
-                  ))}
-                  <Badge variant="neutral">{result.data.classLevel}</Badge>
-                </div>
-              )}
-
-              <p className="text-2xl font-semibold tabular-nums text-ink">
-                {formatSalaryRange(result.data.salaryMin, result.data.salaryMax, result.data.currency)}
-              </p>
-
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm text-ink-secondary">
-                <dt className="flex items-center gap-1.5">
-                  <MapPin className="size-4" aria-hidden="true" /> Area
-                </dt>
-                <dd>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px] lg:items-start">
+            {/* Main column */}
+            <div className="flex flex-col gap-6">
+              {/* Identity header */}
+              <header className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{result.data.title}</h1>
+                <p className="flex items-center gap-1.5 text-ink-secondary">
+                  <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
                   {result.data.area}, {result.data.city}
                   {result.data.locationDescription ? ` — ${result.data.locationDescription}` : ''}
-                </dd>
-
-                <dt className="flex items-center gap-1.5">
-                  <Calendar className="size-4" aria-hidden="true" /> Schedule
-                </dt>
-                <dd>
-                  {result.data.daysPerWeek} day{result.data.daysPerWeek === 1 ? '' : 's'} per week
-                  {result.data.schedules.length > 0 && (
-                    <>
-                      {' · '}
-                      {result.data.schedules
-                        .map((s) =>
-                          s.startMinute !== null && s.endMinute !== null
-                            ? `${WEEKDAY_LABEL[s.day]} ${formatMinutes(s.startMinute)}–${formatMinutes(s.endMinute)}`
-                            : WEEKDAY_LABEL[s.day],
-                        )
-                        .join(', ')}
-                    </>
-                  )}
-                </dd>
-
-                <dt className="flex items-center gap-1.5">
-                  <Clock className="size-4" aria-hidden="true" /> Teaching mode
-                </dt>
-                <dd>{TEACHING_MODE_LABEL[result.data.teachingMode]}</dd>
-
-                {result.data.preferredGender && (
-                  <>
-                    <dt className="flex items-center gap-1.5">
-                      <Users className="size-4" aria-hidden="true" /> Tutor preference
-                    </dt>
-                    <dd>{result.data.preferredGender}</dd>
-                  </>
-                )}
-              </dl>
-            </div>
-
-            {/* Second: expectations */}
-            {(result.data.description || result.data.curriculum || result.data.universityPreferences.length > 0) && (
-              <section className="flex flex-col gap-4 border-t border-border pt-6">
-                {result.data.description && (
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-lg font-semibold text-ink">What the tutor should help with</h2>
-                    <p className="whitespace-pre-line text-ink-secondary">{result.data.description}</p>
+                </p>
+                {(result.data.subjects.length > 0 || result.data.classLevel) && (
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {result.data.subjects.map((subject) => (
+                      <Badge key={subject.id} variant="success">
+                        {subject.name}
+                      </Badge>
+                    ))}
+                    <Badge variant="neutral">{result.data.classLevel}</Badge>
                   </div>
                 )}
-                {result.data.curriculum && (
-                  <p className="text-sm text-ink-secondary">
-                    Curriculum: <span className="text-ink">{result.data.curriculum.name}</span>
-                  </p>
-                )}
-                {result.data.universityPreferences.length > 0 && (
-                  <p className="text-sm text-ink-secondary">
-                    Preferred university:{' '}
-                    <span className="text-ink">
-                      {result.data.universityPreferences.map((u) => u.name).join(', ')}
-                    </span>{' '}
-                    — a preference, not a strict requirement.
-                  </p>
-                )}
-              </section>
-            )}
+              </header>
 
-            {/* Third: next action */}
-            <section className="flex flex-col gap-3 border-t border-border pt-6">
-              <ApplySection listingId={result.data.id} listingStatus={result.data.status} />
+              {/* Tuition preferences */}
+              <DetailSection title="Tuition preferences" icon={SlidersHorizontal}>
+                <dl className="grid grid-cols-1 gap-x-3 gap-y-3 text-sm sm:grid-cols-2">
+                  <Fact icon={Languages} label="Medium" value={result.data.curriculum?.name ?? 'Not specified'} />
+                  <Fact
+                    icon={Home}
+                    label="Mode"
+                    value={TEACHING_MODE_LABEL[result.data.teachingMode] ?? result.data.teachingMode}
+                  />
+                  <Fact
+                    icon={Users}
+                    label="Tutor preference"
+                    value={
+                      result.data.preferredGender
+                        ? (GENDER_PREFERENCE_LABEL[result.data.preferredGender] ?? result.data.preferredGender)
+                        : 'No preference'
+                    }
+                  />
+                  <Fact
+                    icon={Calendar}
+                    label="Frequency"
+                    value={`${result.data.daysPerWeek} day${result.data.daysPerWeek === 1 ? '' : 's'}/week`}
+                  />
+                </dl>
+              </DetailSection>
+
+              {/* What the tutor should help with */}
+              {result.data.description && (
+                <DetailSection title="What the tutor should help with" icon={BookOpen}>
+                  <p className="max-w-prose whitespace-pre-line leading-relaxed text-ink-secondary">
+                    {result.data.description}
+                  </p>
+                </DetailSection>
+              )}
+
+              {/* Preferred university */}
+              {result.data.universityPreferences.length > 0 && (
+                <DetailSection title="Preferred university" icon={GraduationCap}>
+                  <div className="flex flex-wrap gap-1.5">
+                    {result.data.universityPreferences.map((u) => (
+                      <Badge key={u.id} variant="information">
+                        {u.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-sm text-ink-secondary">A preference, not a strict requirement.</p>
+                </DetailSection>
+              )}
+
               <ReportDialog target={{ listingId: result.data.id }} label="Report this listing" />
-            </section>
-          </>
+            </div>
+
+            {/* Sticky action sidebar */}
+            <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
+              <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-ink-secondary">Monthly budget</p>
+                  <p className="text-2xl font-bold tabular-nums text-primary">
+                    {formatSalaryRange(result.data.salaryMin, result.data.salaryMax, result.data.currency)}
+                  </p>
+                </div>
+                <ApplySection listingId={result.data.id} listingStatus={result.data.status} />
+              </div>
+
+              {result.data.schedules.length > 0 && (
+                <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6 shadow-sm">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+                    <Calendar className="size-4 text-primary" aria-hidden="true" />
+                    Weekly schedule
+                  </h2>
+                  <div className="flex flex-col gap-1.5">
+                    {WEEKDAY_ORDER.map((day) => {
+                      const slot = result.data.schedules.find((s) => s.day === day);
+                      return (
+                        <div
+                          key={day}
+                          className={cn(
+                            'flex items-center justify-between rounded-lg px-3 py-2 text-sm',
+                            slot ? 'bg-soft-green text-ink' : 'text-ink-secondary/60',
+                          )}
+                        >
+                          <span className="font-medium">{WEEKDAY_LABEL[day]}</span>
+                          <span className={slot ? 'tabular-nums text-primary' : ''}>
+                            {slot
+                              ? slot.startMinute !== null && slot.endMinute !== null
+                                ? `${formatMinutes(slot.startMinute)}–${formatMinutes(slot.endMinute)}`
+                                : 'Time not set'
+                              : 'Not needed'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </aside>
+          </div>
         )}
       </Container>
     </>

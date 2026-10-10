@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { CheckboxGrid } from '@/components/checkbox-grid';
+import { TagMultiSelect } from '@/components/tag-multi-select';
 import type { ReferenceItem } from '@/features/marketplace/types';
 import { replaceCurricula, replaceGrades, replaceSubjects } from '@/features/tutor-profile/api';
 import type { TutorProfile } from '@/features/tutor-profile/types';
@@ -44,13 +44,26 @@ export function TeachingStage({
 
   return (
     <div className="flex flex-col gap-6">
-      <CheckboxGrid legend="Subjects you teach" options={subjects} selected={subjectIds} onChange={setSubjectIds} />
-      <CheckboxGrid legend="Classes you teach" options={grades} selected={gradeLevels} onChange={setGradeLevels} />
-      <CheckboxGrid
+      <TagMultiSelect
+        legend="Subjects you teach"
+        options={subjects}
+        selected={subjectIds}
+        onChange={setSubjectIds}
+        placeholder="Search subjects…"
+      />
+      <TagMultiSelect
+        legend="Classes you teach"
+        options={grades}
+        selected={gradeLevels}
+        onChange={setGradeLevels}
+        placeholder="Search classes…"
+      />
+      <TagMultiSelect
         legend="Curricula you're familiar with (optional)"
         options={curricula}
         selected={curriculumIds}
         onChange={setCurriculumIds}
+        placeholder="Search curricula…"
       />
 
       {formError && <Alert variant="danger">{formError}</Alert>}

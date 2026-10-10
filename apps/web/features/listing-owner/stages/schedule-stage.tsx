@@ -7,6 +7,7 @@ import { Checkbox, CheckboxLabel } from '@/components/ui/checkbox';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TEACHING_MODE_OPTIONS } from '@/features/marketplace/format';
 import type { Weekday } from '@/features/marketplace/types';
 import { updateListing } from '@/features/listing-owner/api';
 import type { ListingDetail } from '@/features/listing-owner/types';
@@ -19,12 +20,6 @@ const WEEKDAYS: { id: Weekday; label: string }[] = [
   { id: 'WEDNESDAY', label: 'Wednesday' },
   { id: 'THURSDAY', label: 'Thursday' },
   { id: 'FRIDAY', label: 'Friday' },
-];
-
-const TEACHING_MODE_OPTIONS: { id: 'HOME' | 'ONLINE' | 'BOTH'; name: string }[] = [
-  { id: 'HOME', name: "At the student's home" },
-  { id: 'ONLINE', name: 'Online' },
-  { id: 'BOTH', name: 'Either' },
 ];
 
 interface SlotState {

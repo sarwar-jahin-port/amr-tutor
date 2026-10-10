@@ -1,5 +1,6 @@
 'use client';
 
+import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -57,19 +58,20 @@ function ApplicationRow({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-1">
-        <Link href={`/tuition/${application.listing.id}`} className="font-medium text-ink hover:text-primary">
-          {application.listing.title}
-        </Link>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/tuition/${application.listing.id}`} className="font-semibold text-ink hover:text-primary">
+            {application.listing.title}
+          </Link>
           <Badge variant={APPLICATION_STATUS_BADGE[application.status]}>
             {APPLICATION_STATUS_LABEL[application.status]}
           </Badge>
-          <span className="text-sm text-ink-secondary">
-            {application.listing.area}, {application.listing.city}
-          </span>
         </div>
+        <p className="flex items-center gap-1.5 text-sm text-ink-secondary">
+          <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+          {application.listing.area}, {application.listing.city}
+        </p>
       </div>
       <div className="flex gap-2">
         {MESSAGEABLE_STATUSES.has(application.status) && (

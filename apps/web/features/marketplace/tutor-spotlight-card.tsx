@@ -2,6 +2,7 @@ import { BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { AcademicStatus, TutorSummary } from './types';
 
 const ACADEMIC_STATUS_LABEL: Record<AcademicStatus, string> = {
@@ -45,5 +46,25 @@ export function TutorSpotlightCard({ tutor }: { tutor: TutorSummary }) {
         </div>
       )}
     </Link>
+  );
+}
+
+export function TutorSpotlightCardSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm h-[160px]">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-12 rounded-full" />
+        <div className="flex min-w-0 flex-col gap-1.5 w-full">
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+      <Skeleton className="h-4 w-1/3" />
+      <div className="mt-auto flex flex-wrap gap-1.5">
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-14 rounded-full" />
+      </div>
+    </div>
   );
 }

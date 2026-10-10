@@ -1,6 +1,7 @@
 import { Container } from '@/components/ui/container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SiteHeader } from '@/components/site-header';
+import { TutorSpotlightCardSkeleton } from '@/features/marketplace/tutor-spotlight-card';
 
 export default function TutorsLoading() {
   return (
@@ -16,7 +17,7 @@ export default function TutorsLoading() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+              <TutorSpotlightCardSkeleton key={i} />
             ))}
           </div>
         </div>

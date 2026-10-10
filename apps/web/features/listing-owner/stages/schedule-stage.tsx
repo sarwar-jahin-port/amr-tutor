@@ -124,13 +124,13 @@ export function ScheduleStage({
               <CheckboxLabel htmlFor={`day-${day.id}`}>{day.label}</CheckboxLabel>
             </div>
             {slots[day.id].enabled && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-2">
                 <Input
                   type="time"
                   aria-label={`${day.label} start time`}
                   value={slots[day.id].startTime}
                   onChange={(e) => updateSlot(day.id, { startTime: e.target.value })}
-                  className="w-32"
+                  className="flex-1 sm:w-36 sm:flex-none"
                 />
                 <span className="text-ink-secondary">–</span>
                 <Input
@@ -138,7 +138,7 @@ export function ScheduleStage({
                   aria-label={`${day.label} end time`}
                   value={slots[day.id].endTime}
                   onChange={(e) => updateSlot(day.id, { endTime: e.target.value })}
-                  className="w-32"
+                  className="flex-1 sm:w-36 sm:flex-none"
                 />
               </div>
             )}

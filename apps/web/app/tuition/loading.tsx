@@ -1,6 +1,7 @@
 import { Container } from '@/components/ui/container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SiteHeader } from '@/components/site-header';
+import { TuitionOpportunityCardSkeleton } from '@/features/marketplace/tuition-opportunity-card';
 
 export default function TuitionLoading() {
   return (
@@ -16,7 +17,7 @@ export default function TuitionLoading() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+              <TuitionOpportunityCardSkeleton key={i} />
             ))}
           </div>
         </div>

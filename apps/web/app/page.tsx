@@ -53,7 +53,7 @@ export default async function HomePage() {
       <main>
         {/* Hero */}
         <div className="relative overflow-hidden bg-canvas">
-          <Container className="grid gap-10 py-14 md:grid-cols-2 md:items-stretch md:py-24">
+          <Container className="grid gap-10 pt-8 pb-0 md:grid-cols-2 md:items-stretch md:py-24">
             <div className="flex flex-col gap-6">
               <div className="animate-fade-up relative inline-flex w-fit items-center">
                 <svg
@@ -150,11 +150,11 @@ export default async function HomePage() {
 
         {/* Recent opportunities / tutors, only shown once real content exists */}
         {(recentListings.length > 0 || recentTutors.length > 0) && (
-          <Container className="flex flex-col gap-10 py-14">
+          <Container className="flex flex-col gap-8 py-8 md:gap-10 md:py-14">
             {recentListings.length > 0 && (
               <section className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-ink">Recent tuition opportunities</h2>
+                  <h2 className="text-xl md:text-2xl font-semibold text-ink">Recent tuition opportunities</h2>
                   <Link href="/tuition" className="text-sm font-medium text-primary hover:underline">
                     View all
                   </Link>
@@ -170,7 +170,7 @@ export default async function HomePage() {
             {recentTutors.length > 0 && (
               <section className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-ink">Tutors ready to teach</h2>
+                  <h2 className="text-xl md:text-2xl font-semibold text-ink">Tutors ready to teach</h2>
                   <Link href="/tutors" className="text-sm font-medium text-primary hover:underline">
                     View all
                   </Link>

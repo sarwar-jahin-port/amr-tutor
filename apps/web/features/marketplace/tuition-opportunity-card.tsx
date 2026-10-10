@@ -1,5 +1,6 @@
 import { BookOpen, CalendarDays, Clock, Home, Languages, MapPin, Users } from 'lucide-react';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Fact } from './fact';
 import { formatMinutes, formatSalaryRange, GENDER_PREFERENCE_LABEL, TEACHING_MODE_LABEL, WEEKDAY_LABEL } from './format';
@@ -93,5 +94,32 @@ export function TuitionOpportunityCard({ listing }: { listing: ListingDetail }) 
         </span>
       </div>
     </Link>
+  );
+}
+
+export function TuitionOpportunityCardSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm h-[380px]">
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <div>
+        <Skeleton className="h-6 w-3/4 mb-1" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-3 mt-2">
+        <Skeleton className="h-8 w-full col-span-2" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full col-span-2" />
+      </dl>
+      <div className="mt-auto flex items-center justify-between pt-4">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-9 w-28 rounded-full" />
+      </div>
+    </div>
   );
 }

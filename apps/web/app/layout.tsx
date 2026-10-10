@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_Bengali } from 'next/font/google';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { Providers } from './providers';
+import { BottomNav } from '@/components/bottom-nav';
 
 // Bangla is architected for from day one (decision record 0001 §1) even though
 // launch copy is English-only, so the Bengali font loads as a ready fallback
@@ -30,8 +31,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${notoSansBengali.variable}`}>
-      <body className="min-h-screen bg-canvas text-ink antialiased">
-        <Providers>{children}</Providers>
+      <body className="min-h-screen bg-canvas text-ink antialiased pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+        <Providers>
+          {children}
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

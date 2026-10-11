@@ -101,15 +101,21 @@ export class UsersService {
           { phone: { contains: query.search } },
         ],
       }),
-      ...(query.role && { roles: { some: { role: query.role } } }),
-      ...(query.status && { status: query.status }),
+      ...(query.role?.length && { roles: { some: { role: { in: query.role } } } }),
+      ...(query.status?.length && { status: { in: query.status } }),
+      ...((query.createdFrom || query.createdTo) && {
+        createdAt: {
+          ...(query.createdFrom && { gte: new Date(query.createdFrom) }),
+          ...(query.createdTo && { lte: new Date(query.createdTo) }),
+        },
+      }),
     };
 
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         include: { roles: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [query.sortBy ?? 'createdAt']: query.sortOrder ?? 'desc' },
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),

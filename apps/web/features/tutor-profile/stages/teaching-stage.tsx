@@ -59,11 +59,11 @@ export function TeachingStage({
         placeholder="Search classes…"
       />
       <TagMultiSelect
-        legend="Curricula you're familiar with (optional)"
+        legend="Curriculum you're familiar with (optional)"
         options={curricula}
         selected={curriculumIds}
         onChange={setCurriculumIds}
-        placeholder="Search curricula…"
+        placeholder="Search curriculum…"
       />
 
       {formError && <Alert variant="danger">{formError}</Alert>}

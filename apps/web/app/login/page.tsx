@@ -35,8 +35,9 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setFormError(null);
     try {
-      await login(values.email, values.password);
-      router.push('/dashboard');
+      const user = await login(values.email, values.password);
+      const isModerator = user.roles.some((role) => role === 'VERIFIER' || role === 'MODERATOR' || role === 'ADMIN');
+      router.push(isModerator ? '/admin' : '/dashboard');
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Unable to log in.');
     }

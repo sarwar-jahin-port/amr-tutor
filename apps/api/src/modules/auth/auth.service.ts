@@ -88,6 +88,19 @@ export class AuthService {
     return { id: user.id, roles: user.roles.map((r) => r.role) };
   }
 
+  /**
+   * A support "view as" session: access-token only, same TTL as a normal
+   * login (ACCESS_TOKEN_TTL_SECONDS, currently 15m) but deliberately issues
+   * no refresh token, so it cannot be silently renewed — it just expires
+   * and the admin falls back to their own session.
+   */
+  issueImpersonationToken(targetUserId: string, targetRoles: Role[], adminUserId: string): { accessToken: string; expiresInSeconds: number } {
+    const expiresInSeconds = this.config.getOrThrow<number>('ACCESS_TOKEN_TTL_SECONDS');
+    const payload: AccessTokenPayload = { sub: targetUserId, roles: targetRoles, impersonatedBy: adminUserId };
+    const accessToken = this.jwt.sign(payload, { expiresIn: expiresInSeconds });
+    return { accessToken, expiresInSeconds };
+  }
+
   async issueTokens(userId: string, roles: Role[], meta: SessionMeta): Promise<IssuedTokens> {
     const accessTokenExpiresInSeconds = this.config.getOrThrow<number>('ACCESS_TOKEN_TTL_SECONDS');
     const payload: AccessTokenPayload = { sub: userId, roles };

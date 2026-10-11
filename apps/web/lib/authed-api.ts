@@ -1,4 +1,4 @@
-import { getAccessToken } from '@/features/auth/auth-context';
+import { getAccessToken } from './auth/token-store';
 import type { ApiErrorBody } from '@/features/auth/types';
 import { env } from './env';
 

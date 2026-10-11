@@ -9,7 +9,60 @@ function normalize(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-const SUBJECTS = ['Mathematics', 'English', 'Physics', 'Chemistry', 'Biology', 'Bangla', 'ICT'];
+// Reflects what students actually study and tutors actually advertise across
+// the four curricula below: NCTB's Bangla Medium and English Version share the
+// same subjects (SSC science/commerce/arts groups), English Medium follows
+// the Cambridge/Edexcel O/A Level syllabus, and Madrasah (Dakhil/Alim) adds
+// its own religious subjects on top of the NCTB core.
+const SUBJECTS = [
+  // Core (every curriculum)
+  'Bangla',
+  'Bangla 1st Paper',
+  'Bangla 2nd Paper',
+  'English',
+  'English 1st Paper',
+  'English 2nd Paper',
+  'English Language',
+  'English Literature',
+  'Mathematics',
+  'Higher Mathematics',
+  'Additional Mathematics',
+  'ICT',
+  'Computer Science',
+
+  // Science group
+  'General Science',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Combined Science',
+
+  // Social science & humanities (SSC arts group)
+  'Bangladesh and Global Studies',
+  'History of Bangladesh and World Civilization',
+  'Civics and Good Governance',
+  'Geography and Environment',
+  'Economics',
+  'Sociology',
+
+  // Commerce group
+  'Accounting',
+  'Business Entrepreneurship',
+  'Finance and Banking',
+  'Business Studies',
+
+  // Religion and moral education
+  'Islam and Moral Education',
+  'Hindu Religious Education',
+
+  // Madrasah (Dakhil/Alim)
+  'Arabic',
+  'Quran Majid and Tajwid',
+  'Hadis Sharif',
+  'Islamic History and Culture',
+
+  'Agriculture Studies',
+];
 
 const CURRICULA = [
   'Bangla Medium (NCTB)',
@@ -34,6 +87,20 @@ const UNIVERSITIES = [
   'University of Barisal',
   'Begum Rokeya University, Rangpur',
   'Bangladesh Agricultural University',
+  'Jagannath University',
+  'Islamic University of Technology',
+  'Rajshahi University of Engineering and Technology',
+  'Khulna University of Engineering and Technology',
+  'Dhaka University of Engineering and Technology',
+  'Military Institute of Science and Technology',
+  'Jatiya Kabi Kazi Nazrul Islam University',
+  'American International University-Bangladesh',
+  'Independent University, Bangladesh',
+  'East West University',
+  'United International University',
+  'Ahsanullah University of Science and Technology',
+  'Daffodil International University',
+  'Southeast University',
 ];
 
 async function main(): Promise<void> {

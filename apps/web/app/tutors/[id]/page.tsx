@@ -138,7 +138,7 @@ export default async function TutorProfilePage({ params }: TutorProfilePageProps
 
                     {result.data.curricula.length > 0 && (
                       <div className="flex flex-col gap-2">
-                        <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Curricula</p>
+                        <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Curriculum</p>
                         <div className="flex flex-wrap gap-1.5">
                           {result.data.curricula.map((curriculum) => (
                             <Badge key={curriculum.id} variant="information">

@@ -4,11 +4,13 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { GuardiansModule } from './modules/guardians/guardians.module';
+import { GuardianVerificationsModule } from './modules/guardian-verifications/guardian-verifications.module';
 import { HealthModule } from './modules/health/health.module';
 import { ListingsModule } from './modules/listings/listings.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
@@ -55,7 +57,9 @@ import { VerificationsModule } from './modules/verifications/verifications.modul
     ApplicationsModule,
     MessagingModule,
     VerificationsModule,
+    GuardianVerificationsModule,
     ReportsModule,
+    AdminModule,
   ],
   providers: [
     // Order matters: authenticate first, then check roles.

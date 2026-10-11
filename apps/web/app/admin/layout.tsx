@@ -1,6 +1,6 @@
 'use client';
 
-import { FileWarning, Flag, Gavel, ScrollText, ShieldCheck, Users, Menu, X, LayoutDashboard } from 'lucide-react';
+import { FileWarning, Flag, Gavel, IdCard, ScrollText, ShieldCheck, Users, Menu, X, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -15,7 +15,8 @@ const SECTIONS: { href: string; label: string; icon: typeof Users; roles: Role[]
   { href: '/admin/users', label: 'Users', icon: Users, roles: ['ADMIN'] },
   { href: '/admin/listings', label: 'Listings', icon: FileWarning, roles: ['ADMIN'] },
   { href: '/admin/reports', label: 'Reports', icon: Flag, roles: ['MODERATOR', 'ADMIN'] },
-  { href: '/admin/verifications', label: 'Verifications', icon: ShieldCheck, roles: ['VERIFIER', 'ADMIN'] },
+  { href: '/admin/verifications', label: 'Tutor verifications', icon: ShieldCheck, roles: ['VERIFIER', 'ADMIN'] },
+  { href: '/admin/guardian-verifications', label: 'Guardian verifications', icon: IdCard, roles: ['VERIFIER', 'ADMIN'] },
   { href: '/admin/audit-logs', label: 'Audit logs', icon: ScrollText, roles: ['ADMIN'] },
 ];
 
@@ -35,7 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen flex-col bg-surface-hover">
       <SiteHeader />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         {/* Mobile sidebar backdrop */}
         {isSidebarOpen && (
           <div
@@ -47,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface transition-all duration-300 ease-in-out md:static md:z-auto mt-16 md:mt-0',
+            'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface transition-all duration-300 ease-in-out mt-16 md:sticky md:top-16 md:z-auto md:mt-0 md:h-[calc(100vh-4rem)]',
             isSidebarOpen ? 'w-64 translate-x-0' : '-translate-x-full md:translate-x-0',
             isCollapsed ? 'md:w-16' : 'md:w-64'
           )}

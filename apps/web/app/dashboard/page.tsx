@@ -265,9 +265,14 @@ function GuardianListingsCard() {
             <Megaphone className="size-4 text-primary" aria-hidden="true" />
             Your tuition listings
           </h2>
-          <Button asChild variant="secondary" size="sm">
-            <Link href="/listings/new">Publish a listing</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="tertiary" size="sm">
+              <Link href="/guardian-verification">Identity verification</Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/listings/new">Publish a listing</Link>
+            </Button>
+          </div>
         </div>
 
         {listings.length === 0 ? (

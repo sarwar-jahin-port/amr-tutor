@@ -57,9 +57,9 @@ export function AuthNav() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1.5">
-                <p className="truncate text-sm font-medium">{user.email}</p>
-                <p className="truncate text-xs text-ink-secondary">{user.roles.join(', ')}</p>
+              <div className="flex flex-col space-y-1">
+                <p className="truncate text-sm font-medium leading-none">{user.email}</p>
+                <p className="truncate text-xs leading-none text-ink-secondary">{user.roles.join(', ')}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

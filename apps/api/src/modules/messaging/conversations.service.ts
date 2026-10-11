@@ -32,6 +32,12 @@ export interface MessagePage {
   meta: { nextCursor: string | null };
 }
 
+// The client re-stamps ConversationParticipant.lastReadAt every POLL_INTERVAL_MS
+// (12s, apps/web/app/messages/[id]/page.tsx) while that conversation is open, so a
+// lastReadAt this fresh means the recipient is looking at this exact conversation
+// right now — skip notifying them and let their own poll surface the message.
+const ACTIVELY_VIEWING_WINDOW_MS = 20_000;
+
 @Injectable()
 export class ConversationsService {
   constructor(
@@ -143,7 +149,15 @@ export class ConversationsService {
 
     const recipientUserId = conversation.participants.find((p) => p.userId !== userId)?.userId;
     if (recipientUserId) {
-      await this.notifications.create(recipientUserId, 'MESSAGE_RECEIVED', { conversationId });
+      const recipient = await this.prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId, userId: recipientUserId } },
+        select: { lastReadAt: true },
+      });
+      const isActivelyViewing =
+        !!recipient?.lastReadAt && Date.now() - recipient.lastReadAt.getTime() < ACTIVELY_VIEWING_WINDOW_MS;
+      if (!isActivelyViewing) {
+        await this.notifications.create(recipientUserId, 'MESSAGE_RECEIVED', { conversationId });
+      }
     }
 
     return toMessageDto(message);

@@ -11,14 +11,19 @@ import {
   Get,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from '@nestjs/passport';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SafeUserDto } from '../../common/dto/safe-user.dto';
 import { AuthService, type IssuedTokens, type SessionMeta } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { CompleteGoogleSignupDto } from './dto/complete-google-signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import type { GoogleProfile } from './strategies/google.strategy';
 import type { AuthenticatedUser } from './types/authenticated-user';
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
@@ -83,6 +88,70 @@ export class AuthController {
   async me(@CurrentUser() currentUser: AuthenticatedUser): Promise<{ data: SafeUserDto }> {
     const user = await this.authService.getSafeUserOrThrow(currentUser.id);
     return { data: user };
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<{ data: { verified: true } }> {
+    await this.authService.verifyEmail(dto.token);
+    return { data: { verified: true } };
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Post('verify-email/resend')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendVerificationEmail(@Body() dto: ResendVerificationDto): Promise<void> {
+    await this.authService.resendVerificationEmail(dto.email);
+  }
+
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  @Get('google')
+  googleLogin(): void {
+    // Passport's GoogleStrategy intercepts this request and redirects to
+    // Google's consent screen; this handler body never runs.
+  }
+
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  @Get('google/callback')
+  async googleCallback(
+    @Req() req: Request & { user: GoogleProfile },
+    @Res() res: Response,
+  ): Promise<void> {
+    const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
+    const result = await this.authService.loginWithGoogle(req.user, this.extractMeta(req));
+
+    if ('needsSignup' in result) {
+      const pendingToken = this.authService.issuePendingGoogleSignupToken(req.user);
+      res.redirect(`${frontendUrl}/register/complete-google#pendingToken=${pendingToken}`);
+      return;
+    }
+
+    this.setRefreshCookie(res, result.tokens);
+    const { accessToken, expiresIn } = this.toLoginResponse(result.tokens, result.user);
+    res.redirect(`${frontendUrl}/auth/callback#accessToken=${accessToken}&expiresIn=${expiresIn}`);
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Post('google/complete')
+  @HttpCode(HttpStatus.OK)
+  async completeGoogleSignup(
+    @Body() dto: CompleteGoogleSignupDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ data: { accessToken: string; expiresIn: number; user: SafeUserDto } }> {
+    const { tokens, user } = await this.authService.completeGoogleSignup(
+      dto.pendingToken,
+      dto.roles,
+      this.extractMeta(req),
+    );
+    this.setRefreshCookie(res, tokens);
+    return { data: this.toLoginResponse(tokens, user) };
   }
 
   private toLoginResponse(tokens: IssuedTokens, user: SafeUserDto) {

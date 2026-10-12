@@ -74,3 +74,36 @@ export function meRequest(accessToken: string): Promise<AuthUser> {
     headers: { Authorization: `Bearer ${accessToken}` },
   }).then((res) => handle<AuthUser>(res));
 }
+
+export function verifyEmailRequest(token: string): Promise<{ verified: true }> {
+  return fetch(`${env.apiUrl}/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  }).then((res) => handle<{ verified: true }>(res));
+}
+
+export function resendVerificationRequest(email: string): Promise<void> {
+  return fetch(`${env.apiUrl}/auth/verify-email/resend`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  }).then((res) => handle<void>(res));
+}
+
+export function completeGoogleSignupRequest(
+  pendingToken: string,
+  roles: ('TUTOR' | 'GUARDIAN')[],
+): Promise<LoginResponseData> {
+  return fetch(`${env.apiUrl}/auth/google/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ pendingToken, roles }),
+  }).then((res) => handle<LoginResponseData>(res));
+}
+
+/** Full-page navigation target — the backend decides login vs. sign-up vs. account-linking, not the client. */
+export function googleLoginUrl(): string {
+  return `${env.apiUrl}/auth/google`;
+}

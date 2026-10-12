@@ -7,12 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Pagination } from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/features/notifications/api';
+import {
+  getNotifications,
+  getUnreadCount,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type PaginationMeta,
+} from '@/features/notifications/api';
 import { describeNotification } from '@/features/notifications/format';
 import type { Notification } from '@/features/notifications/types';
+
+const PAGE_SIZE = 20;
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -51,6 +60,11 @@ export default function NotificationsPage() {
   const { status } = useAuth();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[] | undefined>(undefined);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
+  const [page, setPage] = useState(1);
+  // Tracked separately from the current page's rows, since "Mark all read" should
+  // reflect unread notifications across every page, not just the one that's loaded.
+  const [unreadTotal, setUnreadTotal] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') router.replace('/login');
@@ -59,21 +73,33 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (status !== 'authenticated') return;
     let cancelled = false;
-    getNotifications().then((rows) => {
-      if (!cancelled) setNotifications(rows);
+    getNotifications({ page, limit: PAGE_SIZE }).then((res) => {
+      if (cancelled) return;
+      setNotifications(res.data);
+      setMeta(res.meta);
     });
     return () => {
       cancelled = true;
     };
+  }, [status, page]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    getUnreadCount()
+      .then(setUnreadTotal)
+      .catch(() => {});
   }, [status]);
 
   function handleRead(id: string) {
+    const wasUnread = notifications?.find((n) => n.id === id)?.readAt == null;
     setNotifications((rows) => rows?.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)));
+    if (wasUnread) setUnreadTotal((count) => (count ? count - 1 : 0));
     markNotificationRead(id).catch(() => {});
   }
 
   function handleMarkAllRead() {
     setNotifications((rows) => rows?.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
+    setUnreadTotal(0);
     markAllNotificationsRead().catch(() => {});
   }
 
@@ -98,7 +124,7 @@ export default function NotificationsPage() {
     );
   }
 
-  const hasUnread = notifications?.some((n) => !n.readAt) ?? false;
+  const totalPages = meta ? Math.max(1, Math.ceil(meta.total / meta.limit)) : 1;
 
   return (
     <>
@@ -106,7 +132,7 @@ export default function NotificationsPage() {
       <Container as="main" narrow className="flex flex-col gap-6 py-16">
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-3xl font-semibold tracking-tight text-ink">Notifications</h1>
-          {hasUnread && (
+          {!!unreadTotal && (
             <Button variant="tertiary" size="sm" onClick={handleMarkAllRead}>
               Mark all read
             </Button>
@@ -116,11 +142,14 @@ export default function NotificationsPage() {
         {notifications && notifications.length === 0 ? (
           <EmptyState title="No notifications yet" description="Activity on your listings, applications, and messages will show up here." />
         ) : (
-          <div className="flex flex-col gap-3">
-            {notifications?.map((notification) => (
-              <NotificationRow key={notification.id} notification={notification} onRead={handleRead} />
-            ))}
-          </div>
+          <>
+            <div className="flex flex-col gap-3">
+              {notifications?.map((notification) => (
+                <NotificationRow key={notification.id} notification={notification} onRead={handleRead} />
+              ))}
+            </div>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         )}
       </Container>
     </>

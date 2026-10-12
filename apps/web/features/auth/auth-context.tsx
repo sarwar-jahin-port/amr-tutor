@@ -30,6 +30,8 @@ interface AuthContextValue {
   impersonatorAdmin: AuthUser | null;
   startImpersonation: (targetUserId: string) => Promise<void>;
   endImpersonation: () => void;
+  /** Used by the Google OAuth callback and sign-up-completion pages, which already hold a fresh access token + user from the API response. */
+  setAuthenticatedSession: (accessToken: string, user: AuthUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -118,6 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAdminStash(null);
   }, [adminStash]);
 
+  const setAuthenticatedSession = useCallback((accessToken: string, nextUser: AuthUser) => {
+    setAccessToken(accessToken);
+    setUser(nextUser);
+    setStatus('authenticated');
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
@@ -128,8 +136,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       impersonatorAdmin: adminStash?.user ?? null,
       startImpersonation,
       endImpersonation,
+      setAuthenticatedSession,
     }),
-    [status, user, login, register, logout, adminStash, startImpersonation, endImpersonation],
+    [
+      status,
+      user,
+      login,
+      register,
+      logout,
+      adminStash,
+      startImpersonation,
+      endImpersonation,
+      setAuthenticatedSession,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

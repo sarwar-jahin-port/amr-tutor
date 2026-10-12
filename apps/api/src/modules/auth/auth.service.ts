@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -10,10 +11,16 @@ import type { Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { toSafeUserDto, type SafeUserDto } from '../../common/dto/safe-user.dto';
 import { PrismaService } from '../../database/prisma.service';
+import { MailerService } from '../mailer/mailer.service';
 import type { LoginDto } from './dto/login.dto';
-import type { RegisterDto } from './dto/register.dto';
+import type { RegisterDto, SelfRegisterableRole } from './dto/register.dto';
+import type { GoogleProfile } from './strategies/google.strategy';
 import { generateOpaqueToken, hashToken } from './refresh-token.util';
 import type { AccessTokenPayload } from './types/access-token-payload';
+import type { PendingGoogleSignupPayload } from './types/pending-google-signup-payload';
+
+const EMAIL_VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const PENDING_GOOGLE_SIGNUP_TTL_SECONDS = 10 * 60;
 
 export interface IssuedTokens {
   accessToken: string;
@@ -34,6 +41,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly mailer: MailerService,
   ) {}
 
   async register(dto: RegisterDto): Promise<SafeUserDto> {
@@ -61,7 +69,163 @@ export class AuthService {
       include: { roles: true },
     });
 
+    await this.sendVerificationEmail(user.id, dto.email);
+
     return toSafeUserDto(user);
+  }
+
+  /**
+   * Soft-gated verification: issuing/sending never blocks registration or
+   * login. `emailVerifiedAt` just stays null until the link is clicked.
+   */
+  private async sendVerificationEmail(userId: string, email: string): Promise<void> {
+    const rawToken = generateOpaqueToken();
+    await this.prisma.emailVerificationToken.create({
+      data: {
+        userId,
+        tokenHash: hashToken(rawToken),
+        expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_MS),
+      },
+    });
+
+    const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
+    const verifyUrl = `${frontendUrl}/verify-email?token=${rawToken}`;
+    await this.mailer.sendVerificationEmail(email, verifyUrl);
+  }
+
+  async verifyEmail(rawToken: string): Promise<void> {
+    const tokenHash = hashToken(rawToken);
+    const record = await this.prisma.emailVerificationToken.findUnique({ where: { tokenHash } });
+
+    if (!record || record.consumedAt || record.expiresAt < new Date()) {
+      throw new BadRequestException('This verification link is invalid or has expired.');
+    }
+
+    // Atomically claims the token — if two requests race on the same token
+    // (e.g. a double-click, or React re-firing an effect), only one can
+    // flip consumedAt from null, so only one proceeds to verify the user.
+    const claimed = await this.prisma.emailVerificationToken.updateMany({
+      where: { id: record.id, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+
+    if (claimed.count === 0) {
+      throw new BadRequestException('This verification link is invalid or has expired.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: record.userId },
+      data: { emailVerifiedAt: new Date() },
+    });
+  }
+
+  /**
+   * Always resolves successfully, whether or not the email belongs to an
+   * account or is already verified — same anti-enumeration rationale as
+   * login (blueprint Phase 3/12).
+   */
+  async resendVerificationEmail(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.emailVerifiedAt) {
+      return;
+    }
+
+    await this.prisma.emailVerificationToken.updateMany({
+      where: { userId: user.id, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+
+    await this.sendVerificationEmail(user.id, email);
+  }
+
+  /**
+   * Resolves an authenticated Google profile to a user session: matches an
+   * already-linked Google account, links Google to an existing
+   * password-based account by email, or signals that a new account needs
+   * to be created (caller then issues a pending-signup token so the
+   * frontend can collect a role before we create anything).
+   */
+  async loginWithGoogle(
+    profile: GoogleProfile,
+    meta: SessionMeta,
+  ): Promise<{ tokens: IssuedTokens; user: SafeUserDto } | { needsSignup: true }> {
+    const linked = await this.prisma.oAuthAccount.findUnique({
+      where: { provider_providerAccountId: { provider: 'GOOGLE', providerAccountId: profile.googleId } },
+      include: { user: { include: { roles: true } } },
+    });
+
+    if (linked) {
+      const tokens = await this.issueTokens(linked.user.id, linked.user.roles.map((r) => r.role), meta);
+      return { tokens, user: toSafeUserDto(linked.user) };
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: profile.email },
+      include: { roles: true },
+    });
+
+    if (existingUser) {
+      await this.prisma.oAuthAccount.create({
+        data: { userId: existingUser.id, provider: 'GOOGLE', providerAccountId: profile.googleId },
+      });
+      if (!existingUser.emailVerifiedAt) {
+        await this.prisma.user.update({
+          where: { id: existingUser.id },
+          data: { emailVerifiedAt: new Date() },
+        });
+      }
+      const tokens = await this.issueTokens(existingUser.id, existingUser.roles.map((r) => r.role), meta);
+      return { tokens, user: await this.getSafeUserOrThrow(existingUser.id) };
+    }
+
+    return { needsSignup: true };
+  }
+
+  issuePendingGoogleSignupToken(profile: GoogleProfile): string {
+    const payload: PendingGoogleSignupPayload = {
+      purpose: 'google_signup',
+      googleId: profile.googleId,
+      email: profile.email,
+      name: profile.name,
+    };
+    return this.jwt.sign(payload, { expiresIn: PENDING_GOOGLE_SIGNUP_TTL_SECONDS });
+  }
+
+  async completeGoogleSignup(
+    pendingToken: string,
+    roles: SelfRegisterableRole[],
+    meta: SessionMeta,
+  ): Promise<{ tokens: IssuedTokens; user: SafeUserDto }> {
+    let payload: PendingGoogleSignupPayload;
+    try {
+      payload = this.jwt.verify<PendingGoogleSignupPayload>(pendingToken);
+    } catch {
+      throw new UnauthorizedException('This sign-up link is invalid or has expired.');
+    }
+
+    if (payload.purpose !== 'google_signup') {
+      throw new UnauthorizedException('This sign-up link is invalid or has expired.');
+    }
+
+    const existingByEmail = await this.prisma.user.findUnique({ where: { email: payload.email } });
+    if (existingByEmail) {
+      throw new ConflictException('An account with this email already exists.');
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: payload.email,
+        emailVerifiedAt: new Date(),
+        roles: { create: roles.map((role) => ({ role })) },
+        oauthAccounts: {
+          create: { provider: 'GOOGLE', providerAccountId: payload.googleId },
+        },
+      },
+      include: { roles: true },
+    });
+
+    const tokens = await this.issueTokens(user.id, user.roles.map((r) => r.role), meta);
+    return { tokens, user: toSafeUserDto(user) };
   }
 
   /**

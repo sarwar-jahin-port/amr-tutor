@@ -12,6 +12,7 @@ export interface SafeUserDto {
   phone: string | null;
   status: UserStatus;
   roles: Role[];
+  emailVerified: boolean;
   createdAt: Date;
 }
 
@@ -21,6 +22,7 @@ export function toSafeUserDto(user: {
   phone: string | null;
   status: UserStatus;
   roles: { role: Role }[];
+  emailVerifiedAt: Date | null;
   createdAt: Date;
 }): SafeUserDto {
   return {
@@ -29,6 +31,7 @@ export function toSafeUserDto(user: {
     phone: user.phone,
     status: user.status,
     roles: user.roles.map((r) => r.role),
+    emailVerified: user.emailVerifiedAt !== null,
     createdAt: user.createdAt,
   };
 }

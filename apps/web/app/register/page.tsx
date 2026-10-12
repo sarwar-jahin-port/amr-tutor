@@ -14,6 +14,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input, PasswordInput, PhoneInput } from '@/components/ui/input';
 import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
+import { googleLoginUrl } from '@/features/auth/api';
 
 const registerSchema = z.object({
   email: z.email('Enter a valid email address.'),
@@ -149,6 +150,16 @@ export default function RegisterPage() {
               {isSubmitting ? 'Creating account…' : 'Register'}
             </Button>
           </form>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium uppercase text-ink-secondary">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button variant="secondary" size="lg" asChild>
+            <a href={googleLoginUrl()}>Continue with Google</a>
+          </Button>
         </div>
 
         <p className="text-center text-sm text-ink-secondary">

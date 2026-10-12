@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
+import { AuthService } from '../src/modules/auth/auth.service';
+import { generateOpaqueToken, hashToken } from '../src/modules/auth/refresh-token.util';
 import { extractCookie, uniqueEmail } from './test-utils';
 
 const PASSWORD = 'StrongPassword123!';
@@ -14,6 +16,7 @@ describe('Auth (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwt: JwtService;
+  let authService: AuthService;
   const createdUserIds: string[] = [];
 
   beforeAll(async () => {
@@ -36,6 +39,7 @@ describe('Auth (e2e)', () => {
 
     prisma = moduleFixture.get(PrismaService);
     jwt = moduleFixture.get(JwtService);
+    authService = moduleFixture.get(AuthService);
   });
 
   afterAll(async () => {
@@ -350,6 +354,134 @@ describe('Auth (e2e)', () => {
         .patch('/api/v1/users/me')
         .set('Authorization', `Bearer ${login.body.data.accessToken}`)
         .send({ phone })
+        .expect(409);
+    });
+  });
+
+  describe('POST /auth/verify-email', () => {
+    async function issueToken(userId: string, overrides: { expiresAt?: Date } = {}) {
+      const rawToken = generateOpaqueToken();
+      await prisma.emailVerificationToken.create({
+        data: {
+          userId,
+          tokenHash: hashToken(rawToken),
+          expiresAt: overrides.expiresAt ?? new Date(Date.now() + 60_000),
+        },
+      });
+      return rawToken;
+    }
+
+    it('verifies the email and sets emailVerifiedAt', async () => {
+      const { id } = await registerUser();
+      const rawToken = await issueToken(id);
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/verify-email')
+        .send({ token: rawToken })
+        .expect(200);
+
+      expect(res.body.data.verified).toBe(true);
+      const user = await prisma.user.findUniqueOrThrow({ where: { id } });
+      expect(user.emailVerifiedAt).not.toBeNull();
+    });
+
+    it('rejects reusing an already-consumed token', async () => {
+      const { id } = await registerUser();
+      const rawToken = await issueToken(id);
+
+      await request(app.getHttpServer()).post('/api/v1/auth/verify-email').send({ token: rawToken }).expect(200);
+      await request(app.getHttpServer()).post('/api/v1/auth/verify-email').send({ token: rawToken }).expect(400);
+    });
+
+    it('rejects an expired token', async () => {
+      const { id } = await registerUser();
+      const rawToken = await issueToken(id, { expiresAt: new Date(Date.now() - 1000) });
+
+      await request(app.getHttpServer()).post('/api/v1/auth/verify-email').send({ token: rawToken }).expect(400);
+    });
+
+    it('rejects an unknown token', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/verify-email')
+        .send({ token: 'does-not-exist' })
+        .expect(400);
+    });
+  });
+
+  describe('POST /auth/verify-email/resend', () => {
+    it('always responds 204, even for an email with no account', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/verify-email/resend')
+        .send({ email: uniqueEmail('resend-nonexistent') })
+        .expect(204);
+    });
+
+    it('invalidates the previous token and issues a fresh one for an unverified account', async () => {
+      const { email, id } = await registerUser();
+      const [originalToken] = await prisma.emailVerificationToken.findMany({ where: { userId: id } });
+
+      await request(app.getHttpServer()).post('/api/v1/auth/verify-email/resend').send({ email }).expect(204);
+
+      const tokens = await prisma.emailVerificationToken.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0]?.id).toBe(originalToken?.id);
+      expect(tokens[0]?.consumedAt).not.toBeNull();
+      expect(tokens[1]?.consumedAt).toBeNull();
+    });
+
+    it('is a no-op for an already-verified account', async () => {
+      const { email, id } = await registerUser();
+      await prisma.user.update({ where: { id }, data: { emailVerifiedAt: new Date() } });
+      const before = await prisma.emailVerificationToken.count({ where: { userId: id } });
+
+      await request(app.getHttpServer()).post('/api/v1/auth/verify-email/resend').send({ email }).expect(204);
+
+      const after = await prisma.emailVerificationToken.count({ where: { userId: id } });
+      expect(after).toBe(before);
+    });
+  });
+
+  describe('POST /auth/google/complete', () => {
+    it('creates a new account from a valid pending Google signup token', async () => {
+      const email = uniqueEmail('google-complete');
+      const pendingToken = authService.issuePendingGoogleSignupToken({
+        googleId: `google-${email}`,
+        email,
+        name: 'Google User',
+      });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/google/complete')
+        .send({ pendingToken, roles: ['GUARDIAN'] })
+        .expect(200);
+
+      createdUserIds.push(res.body.data.user.id);
+      expect(res.body.data.user.email).toBe(email);
+      expect(res.body.data.user.emailVerified).toBe(true);
+      expect(res.body.data.accessToken).toEqual(expect.any(String));
+    });
+
+    it('rejects a malformed or expired pending token', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/google/complete')
+        .send({ pendingToken: 'not-a-real-token', roles: ['TUTOR'] })
+        .expect(401);
+    });
+
+    it('rejects completing sign-up for an email that already has an account', async () => {
+      const { email } = await registerUser();
+      const pendingToken = authService.issuePendingGoogleSignupToken({
+        googleId: `google-${email}`,
+        email,
+        name: 'Dup',
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/google/complete')
+        .send({ pendingToken, roles: ['TUTOR'] })
         .expect(409);
     });
   });

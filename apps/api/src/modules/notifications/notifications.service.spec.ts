@@ -7,13 +7,25 @@ import { NotificationsService } from './notifications.service';
  */
 describe('NotificationsService', () => {
   let prisma: {
-    notification: { create: jest.Mock; updateMany: jest.Mock; findFirst: jest.Mock; count: jest.Mock };
+    notification: {
+      create: jest.Mock;
+      updateMany: jest.Mock;
+      findFirst: jest.Mock;
+      count: jest.Mock;
+      deleteMany: jest.Mock;
+    };
   };
   let service: NotificationsService;
 
   beforeEach(() => {
     prisma = {
-      notification: { create: jest.fn(), updateMany: jest.fn(), findFirst: jest.fn(), count: jest.fn() },
+      notification: {
+        create: jest.fn(),
+        updateMany: jest.fn(),
+        findFirst: jest.fn(),
+        count: jest.fn(),
+        deleteMany: jest.fn(),
+      },
     };
     service = new NotificationsService(prisma as any);
   });
@@ -46,6 +58,23 @@ describe('NotificationsService', () => {
       prisma.notification.findFirst.mockResolvedValue(null); // doesn't belong to this user (or doesn't exist)
 
       await expect(service.markRead('user-1', 'notif-1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('purgeOldReadNotifications', () => {
+    it('only deletes notifications that are both read and older than 30 days', async () => {
+      prisma.notification.deleteMany.mockResolvedValue({ count: 3 });
+
+      await service.purgeOldReadNotifications();
+
+      expect(prisma.notification.deleteMany).toHaveBeenCalledTimes(1);
+      const { where } = prisma.notification.deleteMany.mock.calls[0][0];
+      expect(where.readAt).toEqual({ not: null });
+      expect(where.createdAt.lt).toBeInstanceOf(Date);
+
+      const cutoff = where.createdAt.lt as Date;
+      const expectedCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      expect(Math.abs(cutoff.getTime() - expectedCutoff)).toBeLessThan(5000); // tolerate test execution time
     });
   });
 });

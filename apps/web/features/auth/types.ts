@@ -7,6 +7,7 @@ export interface AuthUser {
   phone: string | null;
   status: UserStatus;
   roles: Role[];
+  emailVerified: boolean;
   createdAt: string;
 }
 

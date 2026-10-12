@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import type { NotificationType, Prisma } from '@prisma/client';
 import { PaginatedResponse, PaginationQueryDto, paginate } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationDto, toNotificationDto } from './dto/notification.dto';
+
+// Only *read* notifications age out — an unread one stays until the user
+// has actually seen it, however old it gets (no row count or age makes it
+// safe to silently drop something nobody has acknowledged yet).
+const READ_RETENTION_DAYS = 30;
 
 /**
  * The shared notification service blueprint Phase 11 calls for ("so
@@ -13,6 +19,8 @@ import { NotificationDto, toNotificationDto } from './dto/notification.dto';
  */
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, type: NotificationType, payload: Record<string, unknown>): Promise<void> {
@@ -63,5 +71,17 @@ export class NotificationsService {
       where: { userId, readAt: null },
       data: { readAt: new Date() },
     });
+  }
+
+  /** Daily sweep: drop read notifications once they're older than the retention window. Unread ones are never touched. */
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async purgeOldReadNotifications(): Promise<void> {
+    const cutoff = new Date(Date.now() - READ_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const { count } = await this.prisma.notification.deleteMany({
+      where: { readAt: { not: null }, createdAt: { lt: cutoff } },
+    });
+    if (count > 0) {
+      this.logger.log(`Purged ${count} read notification(s) older than ${READ_RETENTION_DAYS} days.`);
+    }
   }
 }

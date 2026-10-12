@@ -145,6 +145,10 @@ enum ConsentType {
   MARKETING
 }
 
+enum OAuthProvider {
+  GOOGLE
+}
+
 // ---------------------------------------------------------------------------
 // Core identity
 // ---------------------------------------------------------------------------
@@ -191,6 +195,9 @@ model User {
   auditLogs AuditLog[] @relation("AuditActor")
 
   refreshTokens RefreshToken[]
+
+  oauthAccounts           OAuthAccount[]
+  emailVerificationTokens EmailVerificationToken[]
 
   adminNotesReceived AdminNote[] @relation("AdminNoteTarget")
   adminNotesAuthored AdminNote[] @relation("AdminNoteAuthor")
@@ -266,6 +273,37 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+/** Links a user to a social-login identity (e.g. Google). One row per provider per user. */
+model OAuthAccount {
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String        @db.Uuid
+  provider          OAuthProvider
+  providerAccountId String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+/** Single-use, hashed token emailed to a user to confirm ownership of their address. */
+model EmailVerificationToken {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  tokenHash String @unique
+
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([expiresAt])
 }
 

@@ -105,6 +105,38 @@ class EnvironmentVariables {
   @IsInt()
   @Min(1)
   AUTH_RATE_LIMIT_MAX?: number;
+
+  // --- Brevo transactional email (verification emails) ---
+  @IsString()
+  @IsNotEmpty()
+  BREVO_API_KEY!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  BREVO_SENDER_EMAIL!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  BREVO_SENDER_NAME!: string;
+
+  // --- Google OAuth ---
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_CLIENT_ID!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_CLIENT_SECRET!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  GOOGLE_CALLBACK_URL!: string;
+
+  // Base URL of the web app — used to build verification links and the
+  // post-OAuth redirect (no trailing slash).
+  @IsString()
+  @IsNotEmpty()
+  FRONTEND_URL!: string;
 }
 
 /**

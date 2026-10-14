@@ -1,3 +1,6 @@
+'use client';
+
+import { BookOpen, Building2, FileText, GraduationCap, MapPin, UserCheck } from 'lucide-react';
 import type { Division, ReferenceItem } from './types';
 import { SelectFilter } from './select-filter';
 import { TextFilter } from './text-filter';
@@ -21,18 +24,37 @@ export function TutorFilters({ subjects, grades, curricula, universities, divisi
 
   return (
     <>
-      <SelectFilter paramKey="subjectId" label="Subject" placeholder="Any subject" options={subjects} />
-      <SelectFilter paramKey="gradeLevel" label="Class / grade" placeholder="Any class" options={grades} />
+      <SelectFilter paramKey="subjectId" label="Subject" icon={BookOpen} placeholder="Any subject" options={subjects} />
+      <SelectFilter
+        paramKey="gradeLevel"
+        label="Class / grade"
+        icon={GraduationCap}
+        placeholder="Any class"
+        options={grades}
+      />
       <SelectFilter
         paramKey="academicStatus"
         label="Academic status"
+        icon={UserCheck}
         placeholder="Any status"
         options={ACADEMIC_STATUS_OPTIONS}
       />
-      <SelectFilter paramKey="curriculumId" label="Curriculum" placeholder="Any curriculum" options={curricula} />
-      <SelectFilter paramKey="universityId" label="University" placeholder="Any university" options={universities} />
-      <SelectFilter paramKey="city" label="District" placeholder="Any district" options={districts} />
-      <TextFilter paramKey="area" label="Area" placeholder="e.g. Dhanmondi" />
+      <SelectFilter
+        paramKey="curriculumId"
+        label="Curriculum"
+        icon={FileText}
+        placeholder="Any curriculum"
+        options={curricula}
+      />
+      <SelectFilter
+        paramKey="universityId"
+        label="University"
+        icon={Building2}
+        placeholder="Any university"
+        options={universities}
+      />
+      <SelectFilter paramKey="city" label="District" icon={MapPin} placeholder="Any district" options={districts} />
+      <TextFilter paramKey="area" label="Area" icon={MapPin} placeholder="e.g. Dhanmondi" />
     </>
   );
 }

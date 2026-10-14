@@ -1,7 +1,9 @@
 'use client';
 
+import type { LucideIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FilterLabel } from './filter-label';
 
 const CLEAR_VALUE = '__all__';
 
@@ -13,12 +15,13 @@ export interface SelectFilterOption {
 export interface SelectFilterProps {
   paramKey: string;
   label: string;
+  icon: LucideIcon;
   placeholder: string;
   options: SelectFilterOption[];
 }
 
 /** A Select bound directly to a URL search param — selecting a value navigates immediately. */
-export function SelectFilter({ paramKey, label, placeholder, options }: SelectFilterProps) {
+export function SelectFilter({ paramKey, label, icon, placeholder, options }: SelectFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -38,10 +41,10 @@ export function SelectFilter({ paramKey, label, placeholder, options }: SelectFi
   const fieldId = `filter-${paramKey}`;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={fieldId} className="text-sm font-medium text-ink">
+    <div className="flex flex-col gap-1">
+      <FilterLabel icon={icon} htmlFor={fieldId}>
         {label}
-      </label>
+      </FilterLabel>
       <Select value={value} onValueChange={handleChange}>
         <SelectTrigger id={fieldId}>
           <SelectValue placeholder={placeholder} />

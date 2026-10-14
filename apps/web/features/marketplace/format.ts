@@ -11,6 +11,24 @@ export function formatSalaryRange(min: number | null, max: number | null, curren
   return 'Budget not specified';
 }
 
+const UNIVERSITY_NAME_STOPWORDS = new Set(['of', 'and', 'the', 'for', 'at']);
+
+/**
+ * Long university names ("Bangladesh Agricultural University") blow out card
+ * layouts, so collapse anything past `maxLength` to initials ("BAU"). Short
+ * names (e.g. "BRAC University") pass through untouched — pair this with a
+ * `title` attribute on the element so the full name is one hover away.
+ */
+export function abbreviateUniversity(name: string, maxLength = 24): string {
+  if (name.length <= maxLength) return name;
+  const initials = name
+    .split(/\s+/)
+    .filter((word) => word && !UNIVERSITY_NAME_STOPWORDS.has(word.toLowerCase()))
+    .map((word) => word[0]?.toUpperCase())
+    .join('');
+  return initials.length >= 2 ? initials : name;
+}
+
 export const TEACHING_MODE_LABEL: Record<TeachingMode, string> = {
   HOME: "Student's home",
   ONLINE: 'Online',

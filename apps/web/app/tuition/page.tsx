@@ -1,4 +1,4 @@
-import { BookOpen } from 'lucide-react';
+import { BookOpen, SlidersHorizontal } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Alert } from '@/components/ui/alert';
 import { Container } from '@/components/ui/container';
@@ -17,6 +17,8 @@ import { ClearFiltersLink } from '@/features/marketplace/clear-filters-link';
 import { FilterSheet } from '@/features/marketplace/filter-sheet';
 import { ListingFilters } from '@/features/marketplace/listing-filters';
 import { SearchPagination } from '@/features/marketplace/search-pagination';
+import { SortSelect } from '@/features/marketplace/sort-select';
+import { TuitionHero } from '@/features/marketplace/tuition-hero';
 import { TuitionOpportunityCard } from '@/features/marketplace/tuition-opportunity-card';
 import { TuitionOpportunityRow } from '@/features/marketplace/tuition-opportunity-row';
 import type { ListingDetail } from '@/features/marketplace/types';
@@ -61,6 +63,7 @@ export default async function TuitionPage({ searchParams }: TuitionPageProps) {
       salaryMax: firstNumber(params.salaryMax),
       daysPerWeek: firstNumber(params.daysPerWeek),
       teachingMode: first(params.teachingMode),
+      sort: first(params.sort),
       page,
     }),
   ]);
@@ -78,23 +81,24 @@ export default async function TuitionPage({ searchParams }: TuitionPageProps) {
   return (
     <>
       <SiteHeader />
-      <Container as="main" className="flex flex-col gap-6 py-10">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight text-ink">Find tuition</h1>
-            <p className="text-ink-secondary">
-              Browse published tuition opportunities from guardians across Bangladesh.
-            </p>
-          </div>
+      <TuitionHero />
+      <Container as="main" className="py-8">
+        <div className="flex justify-end md:hidden">
           <FilterSheet>
             <ListingFilters {...filterProps} />
           </FilterSheet>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[260px_1fr]">
-          <aside className="hidden max-h-[calc(100vh-6rem)] flex-col gap-5 overflow-y-auto md:sticky md:top-20 md:flex">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr] md:gap-6 lg:grid-cols-[260px_1fr] lg:gap-8">
+          <aside className="hidden flex-col gap-3 md:sticky md:top-20 md:flex md:max-h-[calc(100vh-6rem)] md:self-start md:overflow-y-auto md:border-r md:border-border md:pr-4 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden lg:pr-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+                <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
+                Filters
+              </h2>
+              <ClearFiltersLink />
+            </div>
             <ListingFilters {...filterProps} />
-            <ClearFiltersLink />
           </aside>
 
           <div className="flex min-w-0 flex-col gap-6">
@@ -115,13 +119,16 @@ export default async function TuitionPage({ searchParams }: TuitionPageProps) {
 
             {results.status === 'ok' && listings.length > 0 && (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-ink-secondary">{results.meta.total} opportunities found</p>
-                  <ViewToggle view={view} />
+                <div className="sticky top-20 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-canvas py-3">
+                  <p className="text-sm text-ink-secondary">Showing {results.meta.total} opportunities</p>
+                  <div className="flex items-center gap-3">
+                    <SortSelect />
+                    <ViewToggle view={view} />
+                  </div>
                 </div>
 
                 {view === 'card' ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {listings.map((listing, index) => (
                       <div
                         key={listing.id}

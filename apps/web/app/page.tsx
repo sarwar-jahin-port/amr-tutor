@@ -1,38 +1,19 @@
-import { CircleCheck, GraduationCap, HandHeart, Search, ShieldCheck } from 'lucide-react';
+import { GraduationCap, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AudienceSections } from '@/components/audience-sections';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
-import { Reveal } from '@/components/ui/reveal';
 import { SiteHeader } from '@/components/site-header';
-import { getListing, searchListings, searchTutors } from '@/features/marketplace/api';
+import { WhyAmrTutorSection } from '@/components/why-amr-tutor-section';
+import { getListing, getTutor, searchListings, searchTutors } from '@/features/marketplace/api';
 import { TuitionOpportunityCard } from '@/features/marketplace/tuition-opportunity-card';
-import { TutorSpotlightCard } from '@/features/marketplace/tutor-spotlight-card';
-import type { ListingDetail } from '@/features/marketplace/types';
-import { getApiHealth } from '@/lib/api-client';
-
-const TRUST_POINTS = [
-  {
-    icon: HandHeart,
-    title: 'Free for everyone',
-    description: 'No commissions, no subscription, no hidden fees for tutors or guardians.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Privacy by default',
-    description: 'Phone numbers and emails stay private until both sides agree to share them.',
-  },
-  {
-    icon: CircleCheck,
-    title: 'Verification, explained honestly',
-    description: "We tell you exactly what's been checked about a tutor — and what hasn't.",
-  },
-];
+import { TutorProfileCard } from '@/features/marketplace/tutor-profile-card';
+import type { ListingDetail, TutorProfile } from '@/features/marketplace/types';
 
 export default async function HomePage() {
-  const [health, listings, tutors] = await Promise.all([
-    getApiHealth(),
+  const [listings, tutors] = await Promise.all([
     searchListings({ page: 1 }),
     searchTutors({ page: 1 }),
   ]);
@@ -44,7 +25,10 @@ export default async function HomePage() {
     .map((result) => (result.status === 'ok' ? result.data : null))
     .filter((listing): listing is ListingDetail => listing !== null);
 
-  const recentTutors = tutors.status === 'ok' ? tutors.data.slice(0, 3) : [];
+  const recentTutorSummaries = tutors.status === 'ok' ? tutors.data.slice(0, 3) : [];
+  const recentTutors = (await Promise.all(recentTutorSummaries.map((tutor) => getTutor(tutor.id))))
+    .map((result) => (result.status === 'ok' ? result.data : null))
+    .filter((tutor): tutor is TutorProfile => tutor !== null);
 
   return (
     <>
@@ -53,7 +37,7 @@ export default async function HomePage() {
       <main>
         {/* Hero */}
         <div className="relative overflow-hidden bg-canvas">
-          <Container className="grid gap-10 pt-8 pb-0 md:grid-cols-2 md:items-stretch md:py-24">
+          <Container className="grid gap-10 pt-8 pb-0 md:grid-cols-2 md:items-stretch md:pt-14">
             <div className="flex flex-col gap-6">
               <div className="animate-fade-up relative inline-flex w-fit items-center">
                 <svg
@@ -135,14 +119,14 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="animate-scale-fade-in relative -mx-4 aspect-[4/3] sm:-mx-6 md:mx-0 md:-mr-8 md:aspect-auto md:h-full lg:-mr-12 xl:-mr-16 [animation-delay:100ms]">
+            <div className="animate-scale-fade-in relative -mx-4 aspect-[1439/1093] self-center sm:-mx-6 md:mx-0 md:-mr-8 lg:-mr-12 xl:-mr-16 [animation-delay:100ms]">
               <Image
-                src="/images/hero.png"
+                src="/images/hero2.png"
                 alt="A guardian and a tutor shaking hands while a smiling student looks on"
                 fill
                 priority
                 sizes="(min-width: 768px) 50vw, 100vw"
-                className="animate-ken-burns object-cover object-[50%_20%] md:object-[60%_30%]"
+                className="animate-ken-burns object-contain"
               />
             </div>
           </Container>
@@ -175,9 +159,9 @@ export default async function HomePage() {
                     View all
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {recentTutors.map((tutor) => (
-                    <TutorSpotlightCard key={tutor.id} tutor={tutor} />
+                    <TutorProfileCard key={tutor.id} tutor={tutor} />
                   ))}
                 </div>
               </section>
@@ -185,42 +169,10 @@ export default async function HomePage() {
           </Container>
         )}
 
+        <AudienceSections />
+
         {/* Trust and safety */}
-        <div className="border-t border-border bg-canvas">
-          <Container className="flex flex-col gap-10 py-16">
-            <Reveal className="flex flex-col items-center gap-3 text-center">
-              <span className="rounded-full bg-soft-green px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                Why AMR Tutor
-              </span>
-              <h2 className="text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-                Built on trust, not commissions
-              </h2>
-              <p className="max-w-lg text-ink-secondary">
-                The same promises every guardian and tutor can count on, every time.
-              </p>
-            </Reveal>
-
-            <div className="grid gap-5 sm:grid-cols-3">
-              {TRUST_POINTS.map(({ icon: Icon, title, description }, index) => (
-                <Reveal key={title} delay={index * 120}>
-                  <div className="group flex h-full flex-col gap-3 rounded-2xl border border-border bg-surface p-6 transition-all duration-base hover:-translate-y-1 hover:border-primary/30 hover:shadow-elevated">
-                    <span className="flex size-12 items-center justify-center rounded-xl bg-soft-green text-primary transition-transform duration-base group-hover:scale-110 group-hover:rotate-3">
-                      <Icon className="size-6" aria-hidden="true" />
-                    </span>
-                    <h3 className="text-lg font-semibold text-ink">{title}</h3>
-                    <p className="text-sm text-ink-secondary">{description}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </Container>
-        </div>
-
-        <Container className="flex justify-center py-6">
-          <Badge variant={health ? 'success' : 'danger'}>
-            API status: {health ? `online (${health.uptimeSeconds}s uptime)` : 'unreachable'}
-          </Badge>
-        </Container>
+        <WhyAmrTutorSection />
       </main>
     </>
   );

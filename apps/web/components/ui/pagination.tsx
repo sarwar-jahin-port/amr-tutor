@@ -29,7 +29,7 @@ function getPageList(page: number, totalPages: number): (number | 'ellipsis')[] 
 }
 
 const navButtonClasses =
-  'flex size-9 items-center justify-center rounded-lg text-sm font-medium text-ink transition-colors duration-fast hover:bg-soft-green disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2';
+  'flex size-9 items-center justify-center rounded-full text-sm font-medium text-ink transition-colors duration-fast hover:bg-soft-green disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2';
 
 export function Pagination({ page, totalPages, onPageChange, className }: PaginationProps) {
   if (totalPages <= 1) return null;
@@ -38,7 +38,7 @@ export function Pagination({ page, totalPages, onPageChange, className }: Pagina
     <nav aria-label="Pagination" className={cn('flex items-center justify-center gap-1', className)}>
       <button
         type="button"
-        className={navButtonClasses}
+        className={cn(navButtonClasses, 'border border-border disabled:border-transparent')}
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
         aria-label="Previous page"
@@ -69,7 +69,7 @@ export function Pagination({ page, totalPages, onPageChange, className }: Pagina
 
       <button
         type="button"
-        className={navButtonClasses}
+        className={cn(navButtonClasses, 'border border-border disabled:border-transparent')}
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
         aria-label="Next page"

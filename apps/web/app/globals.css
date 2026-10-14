@@ -17,6 +17,12 @@
   --color-soft-green: #eaf2eb;
   --color-border: #e2e5de;
   --color-warm-accent: #d99a56;
+
+  /* Accent swatches reserved for the editorial "no-cut" landing variant (landing-v2). */
+  --color-mint: #ddede3;
+  --color-aqua: #dceeef;
+  --color-butter: #f9e8b3;
+  --color-coral: #f7d8ce;
   --color-danger: #b42318;
   --color-danger-surface: #fdecea;
   --color-success: #246b45;
@@ -25,6 +31,8 @@
   --font-sans:
     var(--font-inter), var(--font-noto-sans-bengali), ui-sans-serif, system-ui, sans-serif;
   --font-bengali: var(--font-noto-sans-bengali), var(--font-inter), ui-sans-serif, system-ui;
+  /* Scoped to landing-v2: resolves only where the Caveat font variable is applied. */
+  --font-handwritten: var(--font-handwritten), cursive;
 
   --shadow-elevated: 0 12px 32px -8px rgba(32, 41, 35, 0.18), 0 2px 8px -2px rgba(32, 41, 35, 0.08);
 

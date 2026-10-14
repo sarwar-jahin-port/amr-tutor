@@ -2,6 +2,7 @@ import { BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { abbreviateUniversity } from './format';
 import type { AcademicStatus, TutorSummary } from './types';
 
 const ACADEMIC_STATUS_LABEL: Record<AcademicStatus, string> = {
@@ -28,8 +29,8 @@ export function TutorSpotlightRow({ tutor }: { tutor: TutorSummary }) {
             <p className="truncate font-semibold text-ink">{tutor.fullName}</p>
             {tutor.isVerified && <BadgeCheck className="size-4 shrink-0 text-primary" aria-label="Verified" />}
           </div>
-          <p className="truncate text-sm text-ink-secondary">
-            {tutor.university.name} · {ACADEMIC_STATUS_LABEL[tutor.academicStatus]}
+          <p className="truncate text-sm text-ink-secondary" title={tutor.university.name}>
+            {abbreviateUniversity(tutor.university.name)} · {ACADEMIC_STATUS_LABEL[tutor.academicStatus]}
           </p>
         </div>
 

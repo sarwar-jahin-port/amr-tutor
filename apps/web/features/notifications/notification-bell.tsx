@@ -104,7 +104,7 @@ export function NotificationBell() {
         ) : notifications.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-ink-secondary">No notifications yet.</p>
         ) : (
-          <div className="flex max-h-96 flex-col divide-y divide-border overflow-y-auto">
+          <div className="flex max-h-96 flex-col gap-1 overflow-y-auto p-1.5">
             {notifications.map((notification) => {
               const { title, href } = describeNotification(notification);
               const content = (
@@ -116,10 +116,10 @@ export function NotificationBell() {
                     )}
                     aria-hidden="true"
                   />
-                  <div className="flex min-w-0 flex-col gap-1">
+                  <div className="flex min-w-0 flex-col gap-1.5">
                     <span
                       className={cn(
-                        'text-sm leading-snug',
+                        'break-words text-sm leading-snug',
                         notification.readAt ? 'text-ink-secondary' : 'font-medium text-ink',
                       )}
                     >
@@ -134,7 +134,7 @@ export function NotificationBell() {
                   key={notification.id}
                   asChild
                   onSelect={() => void handleItemClick(notification)}
-                  className="min-h-0 items-start rounded-none px-4 py-3"
+                  className="shrink-0 items-start rounded-lg px-2.5 py-3"
                 >
                   {href ? <Link href={href}>{content}</Link> : <div>{content}</div>}
                 </DropdownMenuItem>

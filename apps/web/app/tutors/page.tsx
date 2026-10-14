@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react';
+import { SlidersHorizontal, Users } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Alert } from '@/components/ui/alert';
 import { Container } from '@/components/ui/container';
@@ -9,6 +9,7 @@ import {
   getGrades,
   getLocations,
   getSubjects,
+  getTutor,
   getUniversities,
   searchTutors,
 } from '@/features/marketplace/api';
@@ -16,8 +17,10 @@ import { ClearFiltersLink } from '@/features/marketplace/clear-filters-link';
 import { FilterSheet } from '@/features/marketplace/filter-sheet';
 import { SearchPagination } from '@/features/marketplace/search-pagination';
 import { TutorFilters } from '@/features/marketplace/tutor-filters';
-import { TutorSpotlightCard } from '@/features/marketplace/tutor-spotlight-card';
+import { TutorProfileCard } from '@/features/marketplace/tutor-profile-card';
 import { TutorSpotlightRow } from '@/features/marketplace/tutor-spotlight-row';
+import { TutorsHero } from '@/features/marketplace/tutors-hero';
+import type { TutorProfile } from '@/features/marketplace/types';
 import { ViewToggle } from '@/features/marketplace/view-toggle';
 
 export const metadata: Metadata = {
@@ -57,30 +60,38 @@ export default async function TutorsPage({ searchParams }: TutorsPageProps) {
   const filterProps = { subjects, grades, curricula, universities, divisions };
   const view = first(params.view) === 'row' ? 'row' : 'card';
 
+  const tutors =
+    results.status === 'ok'
+      ? (await Promise.all(results.data.map((tutor) => getTutor(tutor.id))))
+          .map((result) => (result.status === 'ok' ? result.data : null))
+          .filter((tutor): tutor is TutorProfile => tutor !== null)
+      : [];
+
   return (
     <>
       <SiteHeader />
-      <Container as="main" className="flex flex-col gap-6 py-10">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight text-ink">Find a tutor</h1>
-            <p className="text-ink-secondary">
-              Browse university students available to teach near you.
-            </p>
-          </div>
+      <TutorsHero />
+      <Container as="main" className="py-8">
+        <div className="flex justify-end md:hidden">
           <FilterSheet>
             <TutorFilters {...filterProps} />
           </FilterSheet>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[260px_1fr]">
-          <aside className="hidden max-h-[calc(100vh-6rem)] flex-col gap-5 overflow-y-auto md:sticky md:top-20 md:flex">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr] md:gap-6 lg:grid-cols-[260px_1fr] lg:gap-8">
+          <aside className="hidden flex-col gap-3 md:sticky md:top-20 md:flex md:max-h-[calc(100vh-6rem)] md:self-start md:overflow-y-auto md:border-r md:border-border md:pr-4 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden lg:pr-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+                <SlidersHorizontal className="size-4 text-primary" aria-hidden="true" />
+                Filters
+              </h2>
+              <ClearFiltersLink />
+            </div>
             <TutorFilters {...filterProps} />
-            <ClearFiltersLink />
           </aside>
 
           <div className="flex min-w-0 flex-col gap-6">
-            {results.status === 'error' && (
+            {(results.status === 'error' || (results.status === 'ok' && results.data.length > 0 && tutors.length === 0)) && (
               <Alert variant="danger" title="We couldn't load this page">
                 Your internet connection may be interrupted. Try again.
               </Alert>
@@ -95,28 +106,28 @@ export default async function TutorsPage({ searchParams }: TutorsPageProps) {
               />
             )}
 
-            {results.status === 'ok' && results.data.length > 0 && (
+            {results.status === 'ok' && tutors.length > 0 && (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-ink-secondary">{results.meta.total} tutors found</p>
-                  <ViewToggle view={view} />
+                <div className="sticky top-20 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-canvas py-3">
+                  <p className="text-sm text-ink-secondary">Showing {results.meta.total} tutors found</p>
+                  <ViewToggle view={view} showLabels />
                 </div>
 
                 {view === 'card' ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {results.data.map((tutor, index) => (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {tutors.map((tutor, index) => (
                       <div
                         key={tutor.id}
                         className="animate-fade-up"
                         style={{ animationDelay: `${Math.min(index * 40, 320)}ms` }}
                       >
-                        <TutorSpotlightCard tutor={tutor} />
+                        <TutorProfileCard tutor={tutor} />
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {results.data.map((tutor, index) => (
+                    {tutors.map((tutor, index) => (
                       <div
                         key={tutor.id}
                         className="animate-fade-up"

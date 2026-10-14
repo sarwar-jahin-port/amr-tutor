@@ -1,8 +1,10 @@
 'use client';
 
+import { Clock } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { FilterLabel } from './filter-label';
 
 /** Monthly budget range filter (ui-ux.md §9: a top-priority tuition search filter). */
 export function BudgetFilter() {
@@ -23,8 +25,8 @@ export function BudgetFilter() {
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-ink">Monthly budget (৳)</span>
+    <div className="flex flex-col gap-1">
+      <FilterLabel icon={Clock}>Monthly budget (৳)</FilterLabel>
       <div className="flex items-center gap-2">
         <Input
           type="number"

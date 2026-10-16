@@ -3,7 +3,7 @@
 import { FileWarning, Flag, Gavel, IdCard, ScrollText, ShieldCheck, Users, Menu, X, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SiteHeader } from '@/components/site-header';
 import { useAuth } from '@/features/auth/auth-context';
 import type { Role } from '@/features/auth/types';
@@ -26,10 +26,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
+  // Close the mobile sidebar on route change. Adjusted during render (rather
+  // than in an effect) per https://react.dev/learn/you-might-not-need-an-effect
+  // — comparing against the previous render's pathname avoids setting state
+  // on every render while still closing the drawer exactly once per navigation.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setIsSidebarOpen(false);
-  }, [pathname]);
+  }
 
   const sections = SECTIONS.filter((section) => section.roles.some((role) => user?.roles.includes(role)));
 

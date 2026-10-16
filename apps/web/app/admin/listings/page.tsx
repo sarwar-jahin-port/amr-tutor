@@ -43,23 +43,31 @@ export default function AdminListingsPage() {
     if (status === 'unauthenticated') router.replace('/login');
   }, [status, router]);
 
-  const loadListings = useCallback(async () => {
+  // Built as a Promise chain (rather than async/await) so every state update
+  // — including the loading flag — runs inside a .then()/.catch()/.finally()
+  // callback instead of synchronously when the effect below calls this: a
+  // setState called synchronously within an effect's call stack is flagged
+  // by react-hooks/set-state-in-effect (https://react.dev/learn/you-might-not-need-an-effect).
+  const loadListings = useCallback(() => {
     if (status !== 'authenticated' || !isAdmin) return;
-    setIsLoading(true);
-    try {
-      const res = await getListingQueue({
-        status: filterStatus,
-        page,
-        limit,
-        search: searchQuery || undefined
-      });
-      setListings(res.data);
-      setTotal(res.meta.total);
-    } catch (e) {
-      toast({ title: 'Failed to load listings', variant: 'danger' });
-    } finally {
-      setIsLoading(false);
-    }
+    return Promise.resolve()
+      .then(() => {
+        setIsLoading(true);
+        return getListingQueue({
+          status: filterStatus,
+          page,
+          limit,
+          search: searchQuery || undefined,
+        });
+      })
+      .then((res) => {
+        setListings(res.data);
+        setTotal(res.meta.total);
+      })
+      .catch(() => {
+        toast({ title: 'Failed to load listings', variant: 'danger' });
+      })
+      .finally(() => setIsLoading(false));
   }, [status, isAdmin, filterStatus, page, limit, searchQuery]);
 
   useEffect(() => {

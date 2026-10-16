@@ -5,6 +5,7 @@ import {
   Clock,
   FileText,
   GraduationCap,
+  type LucideIcon,
   MapPin,
   Monitor,
   SlidersHorizontal,
@@ -16,7 +17,7 @@ import { FilterLabel } from '@/features/marketplace/filter-label';
 import { TuitionHero } from '@/features/marketplace/tuition-hero';
 import { TuitionOpportunityCardSkeleton } from '@/features/marketplace/tuition-opportunity-card';
 
-const FILTER_FIELDS = [
+const FILTER_FIELDS: { icon: LucideIcon; label: string; budget?: boolean }[] = [
   { icon: MapPin, label: 'District' },
   { icon: BookOpen, label: 'Area' },
   { icon: BookOpen, label: 'Subject' },
@@ -26,7 +27,7 @@ const FILTER_FIELDS = [
   { icon: Building2, label: 'Preferred university' },
   { icon: Monitor, label: 'Teaching mode' },
   { icon: CalendarDays, label: 'Days per week' },
-] as const;
+];
 
 /**
  * Mirrors app/tuition/page.tsx exactly: the hero and filter labels are

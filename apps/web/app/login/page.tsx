@@ -1,0 +1,110 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/ui/container';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input, PasswordInput } from '@/components/ui/input';
+import { SiteHeader } from '@/components/site-header';
+import { useAuth } from '@/features/auth/auth-context';
+import { googleLoginUrl } from '@/features/auth/api';
+
+const loginSchema = z.object({
+  email: z.email('Enter a valid email address.'),
+  password: z.string().min(1, 'Password is required.'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
+  const { login } = useAuth();
+  const router = useRouter();
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
+
+  const onSubmit = async (values: LoginFormValues) => {
+    setFormError(null);
+    try {
+      const user = await login(values.email, values.password);
+      const isModerator = user.roles.some((role) => role === 'VERIFIER' || role === 'MODERATOR' || role === 'ADMIN');
+      router.push(isModerator ? '/admin' : '/dashboard');
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Unable to log in.');
+    }
+  };
+
+  return (
+    <>
+      <SiteHeader />
+      <Container as="main" narrow className="flex min-h-[80vh] flex-col justify-center gap-6 py-16">
+        <div className="flex flex-col gap-6 rounded-2xl border border-border bg-surface p-8 shadow-sm">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold tracking-tight text-ink">Welcome back</h1>
+            <p className="text-sm text-ink-secondary">Log in to manage your account.</p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={!!errors.email || undefined}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                {...register('email')}
+              />
+              <FieldError id="email-error">{errors.email?.message}</FieldError>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <PasswordInput
+                id="password"
+                autoComplete="current-password"
+                aria-invalid={!!errors.password || undefined}
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                {...register('password')}
+              />
+              <FieldError id="password-error">{errors.password?.message}</FieldError>
+            </Field>
+
+            {formError && <Alert variant="danger">{formError}</Alert>}
+
+            <Button type="submit" size="lg" isLoading={isSubmitting}>
+              {isSubmitting ? 'Logging in…' : 'Log in'}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium uppercase text-ink-secondary">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button variant="secondary" size="lg" asChild>
+            <a href={googleLoginUrl()}>Continue with Google</a>
+          </Button>
+        </div>
+
+        <p className="text-center text-sm text-ink-secondary">
+          Don&apos;t have an account?{' '}
+          <Link href="/register" className="font-medium text-primary hover:underline">
+            Register
+          </Link>
+        </p>
+      </Container>
+    </>
+  );
+}

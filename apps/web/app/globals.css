@@ -1,0 +1,229 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens for the "Learning Commons" visual direction.
+ * Source of truth: docs/ui-ux.md §4-6, §17-18 and docs/master_implementation_blueprint.md Phase 4.
+ * Tailwind v4 reads the `@theme` block below and generates matching utilities
+ * (e.g. --color-canvas -> bg-canvas/text-canvas/border-canvas, --duration-fast -> duration-fast).
+ */
+@theme {
+  --color-canvas: #f8f7f2;
+  --color-surface: #ffffff;
+  --color-ink: #202923;
+  --color-ink-secondary: #59635b;
+  --color-primary: #245b45;
+  --color-primary-hover: #194634;
+  --color-primary-foreground: #ffffff;
+  --color-soft-green: #eaf2eb;
+  --color-border: #e2e5de;
+  --color-warm-accent: #d99a56;
+
+  /* Accent swatches reserved for the editorial "no-cut" landing variant (landing-v2). */
+  --color-mint: #ddede3;
+  --color-aqua: #dceeef;
+  --color-butter: #f9e8b3;
+  --color-coral: #f7d8ce;
+  --color-danger: #b42318;
+  --color-danger-surface: #fdecea;
+  --color-success: #246b45;
+  --color-information: #245d8c;
+
+  --font-sans:
+    var(--font-inter), var(--font-noto-sans-bengali), ui-sans-serif, system-ui, sans-serif;
+  --font-bengali: var(--font-noto-sans-bengali), var(--font-inter), ui-sans-serif, system-ui;
+  /* Scoped to landing-v2: resolves only where the Caveat font variable is applied. */
+  --font-handwritten: var(--font-handwritten), cursive;
+
+  --shadow-elevated: 0 12px 32px -8px rgba(32, 41, 35, 0.18), 0 2px 8px -2px rgba(32, 41, 35, 0.08);
+
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 260ms;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Baseline focus-visible ring for any focusable element that doesn't define its own. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Native checkbox/radio ticks use the brand green instead of the browser default blue. */
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-primary);
+  }
+}
+
+/* Entrance animation shared by popover-like overlays (Select, Dialog, DropdownMenu, Toast). */
+@keyframes content-show {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-content-show {
+  animation: content-show var(--duration-base) ease-out;
+}
+
+.animate-toast-in {
+  animation: toast-slide-in var(--duration-base) ease-out;
+}
+
+@keyframes sheet-slide-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes sheet-slide-bottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-right {
+  animation: sheet-slide-right var(--duration-slow) ease-out;
+}
+
+.animate-sheet-bottom {
+  animation: sheet-slide-bottom var(--duration-slow) ease-out;
+}
+
+/* Hero banner motion: one-shot entrance plus small continuous life. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scale-fade-in {
+  animation: scale-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-draw-line {
+  animation: draw-line 0.5s ease-out both;
+  transform-origin: left;
+}
+
+.animate-wiggle {
+  animation: wiggle 2.8s ease-in-out infinite;
+}
+
+.animate-bob {
+  animation: bob 3.6s ease-in-out infinite;
+}
+
+.animate-ken-burns {
+  animation: ken-burns 14s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

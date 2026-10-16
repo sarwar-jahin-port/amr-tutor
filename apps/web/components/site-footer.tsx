@@ -8,10 +8,9 @@ const FOOTER_LINKS = [
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/tutors', label: 'Find a Tutor' },
   { href: '/tuition', label: 'Find Tuition' },
-  { href: '/verification', label: 'Verification Policy' },
-  { href: '/how-it-works', label: 'Safety Guidelines' },
-  { href: '/how-it-works', label: 'Privacy Policy' },
-  { href: '/how-it-works', label: 'Terms of Service' },
+  { href: '/safety-guidelines', label: 'Safety Guidelines' },
+  { href: '/privacy-policy', label: 'Privacy Policy' },
+  { href: '/terms-of-service', label: 'Terms of Service' },
   { href: '/how-it-works', label: 'Contact' },
 ];
 

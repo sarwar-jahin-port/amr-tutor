@@ -1,0 +1,35 @@
+name: Keep API awake
+
+# Render's free web service plan spins the process down after 15 minutes
+# with no inbound HTTP request, and the next request pays a 30-60s cold
+# start. An external HTTP ping is the only thing that prevents this — a
+# timer running inside the API process does nothing, because Render
+# freezes the whole process on spin-down along with anything scheduled
+# inside it. This workflow pings the API's own readiness endpoint, which
+# already performs a real database query (see
+# apps/api/src/modules/health/health.controller.ts), so each run also
+# confirms the database connection is alive.
+#
+# One-time setup: after the API is deployed on Render, add a repository
+# secret named RENDER_HEALTH_URL set to
+# "https://<your-render-service>.onrender.com/api/v1/health/ready"
+# (Settings -> Secrets and variables -> Actions -> New repository secret).
+# Until that secret exists this workflow fails every run — that's expected
+# before the first deploy.
+#
+# 750 free instance-hours/month on Render is just over a full month
+# (~744h) of continuous uptime, so pinging this one service every 10
+# minutes, 24/7, stays inside the free quota as long as it's the only
+# free web service running in that Render workspace.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: curl --fail --silent --show-error --max-time 25 "${{ secrets.RENDER_HEALTH_URL }}"

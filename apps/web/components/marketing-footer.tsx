@@ -5,7 +5,18 @@ import { SiteFooter } from '@/components/site-footer';
 
 // Public, unauthenticated pages only — dashboards, messaging, applications,
 // verification flows, onboarding, and admin stay footer-free.
-const MARKETING_PATHS = ['/', '/how-it-works', '/landing-v2', '/tutors', '/tuition', '/login', '/register'];
+const MARKETING_PATHS = [
+  '/',
+  '/how-it-works',
+  '/landing-v2',
+  '/tutors',
+  '/tuition',
+  '/login',
+  '/register',
+  '/safety-guidelines',
+  '/privacy-policy',
+  '/terms-of-service',
+];
 
 function isMarketingPath(pathname: string) {
   return MARKETING_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));

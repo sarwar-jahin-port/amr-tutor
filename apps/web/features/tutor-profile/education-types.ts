@@ -13,3 +13,13 @@ export interface EducationRecord {
 /** Mirrors the backend's RequestCertificateUploadDto allow-list — kept in sync by hand, not generated. */
 export const ALLOWED_CERTIFICATE_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
 export const MAX_CERTIFICATE_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
+export interface AdminEducationRecord extends EducationRecord {
+  tutor: { id: string; fullName: string };
+}
+
+export const EDUCATION_LEVEL_LABEL: Record<EducationLevel, string> = {
+  SSC: 'SSC (or equivalent)',
+  HSC: 'HSC (or equivalent)',
+  UNIVERSITY: 'University',
+};

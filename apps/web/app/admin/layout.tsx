@@ -1,6 +1,6 @@
 'use client';
 
-import { FileWarning, Flag, Gavel, IdCard, ScrollText, ShieldCheck, Users, Menu, X, LayoutDashboard } from 'lucide-react';
+import { FileWarning, Flag, Gavel, GraduationCap, IdCard, ScrollText, ShieldCheck, Users, Menu, X, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -17,6 +17,7 @@ const SECTIONS: { href: string; label: string; icon: typeof Users; roles: Role[]
   { href: '/admin/reports', label: 'Reports', icon: Flag, roles: ['MODERATOR', 'ADMIN'] },
   { href: '/admin/verifications', label: 'Tutor verifications', icon: ShieldCheck, roles: ['VERIFIER', 'ADMIN'] },
   { href: '/admin/guardian-verifications', label: 'Guardian verifications', icon: IdCard, roles: ['VERIFIER', 'ADMIN'] },
+  { href: '/admin/education-records', label: 'Education certificates', icon: GraduationCap, roles: ['VERIFIER', 'ADMIN'] },
   { href: '/admin/audit-logs', label: 'Audit logs', icon: ScrollText, roles: ['ADMIN'] },
 ];
 

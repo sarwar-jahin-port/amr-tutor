@@ -75,7 +75,11 @@ export default async function TutorProfilePage({ params }: TutorProfilePageProps
             <div className="flex flex-col gap-6">
               {/* Identity header */}
               <header className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <Avatar name={result.data.fullName} className="size-16 shrink-0 text-xl sm:size-20 sm:text-2xl" />
+                <Avatar
+                  name={result.data.fullName}
+                  photoUrl={result.data.profilePhotoUrl}
+                  className="size-16 shrink-0 text-xl sm:size-20 sm:text-2xl"
+                />
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">

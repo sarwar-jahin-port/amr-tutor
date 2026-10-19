@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PaginatedResponse, paginate } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../database/prisma.service';
+import { StorageService } from '../../storage/storage.service';
 import { TutorSearchQueryDto } from './dto/tutor-search-query.dto';
 import {
   PublicTutorProfileDto,
@@ -13,7 +14,10 @@ import {
 
 @Injectable()
 export class TutorsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   async search(query: TutorSearchQueryDto): Promise<PaginatedResponse<PublicTutorSummaryDto>> {
     const where = this.publicWhere(query);
@@ -29,7 +33,11 @@ export class TutorsService {
       this.prisma.tutorProfile.count({ where }),
     ]);
 
-    return paginate(rows.map(toPublicTutorSummaryDto), query.page, query.limit, total);
+    const dtos = await Promise.all(
+      rows.map((row) => this.withPhotoUrl(toPublicTutorSummaryDto(row), row.profilePhotoKey)),
+    );
+
+    return paginate(dtos, query.page, query.limit, total);
   }
 
   async findPublicById(id: string): Promise<PublicTutorProfileDto> {
@@ -42,7 +50,13 @@ export class TutorsService {
       throw new NotFoundException('Tutor profile not found.');
     }
 
-    return toPublicTutorProfileDto(profile);
+    return this.withPhotoUrl(toPublicTutorProfileDto(profile), profile.profilePhotoKey);
+  }
+
+  /** Signs profilePhotoKey into a short-lived URL — never done inside the pure DTO mapper, which has no access to StorageService. */
+  private async withPhotoUrl<T extends { profilePhotoUrl: string | null }>(dto: T, key: string | null): Promise<T> {
+    if (!key) return dto;
+    return { ...dto, profilePhotoUrl: await this.storage.generateDownloadUrl(key) };
   }
 
   /**

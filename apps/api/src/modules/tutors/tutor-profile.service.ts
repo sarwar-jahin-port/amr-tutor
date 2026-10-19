@@ -9,7 +9,7 @@ import { ReplaceGradesDto } from './dto/replace-grades.dto';
 import { ReplaceSubjectsDto } from './dto/replace-subjects.dto';
 import { RequestPhotoUploadDto } from './dto/request-photo-upload.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
-import { OwnTutorProfileDto, TUTOR_PROFILE_INCLUDE, toPublicTutorProfileDto } from './dto/public-tutor.dto';
+import { PublicTutorProfileDto, TUTOR_PROFILE_INCLUDE, toPublicTutorProfileDto } from './dto/public-tutor.dto';
 
 @Injectable()
 export class TutorProfileService {
@@ -18,7 +18,7 @@ export class TutorProfileService {
     private readonly storage: StorageService,
   ) {}
 
-  async create(userId: string, dto: CreateTutorProfileDto): Promise<OwnTutorProfileDto> {
+  async create(userId: string, dto: CreateTutorProfileDto): Promise<PublicTutorProfileDto> {
     const existing = await this.prisma.tutorProfile.findUnique({ where: { userId } });
     if (existing) {
       throw new ConflictException('A tutor profile already exists for this account.');
@@ -55,15 +55,15 @@ export class TutorProfileService {
       return tx.tutorProfile.findUniqueOrThrow({ where: { id: created.id }, include: TUTOR_PROFILE_INCLUDE });
     });
 
-    return this.withOwnFields(profile);
+    return this.withPhotoUrl(profile);
   }
 
-  async getOwn(userId: string): Promise<OwnTutorProfileDto> {
+  async getOwn(userId: string): Promise<PublicTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
-    return this.withOwnFields(profile);
+    return this.withPhotoUrl(profile);
   }
 
-  async update(userId: string, dto: UpdateTutorProfileDto): Promise<OwnTutorProfileDto> {
+  async update(userId: string, dto: UpdateTutorProfileDto): Promise<PublicTutorProfileDto> {
     const existing = await this.findOwnedOrThrow(userId);
 
     const university = dto.universityId ? await this.assertUniversityActive(dto.universityId) : undefined;
@@ -101,7 +101,7 @@ export class TutorProfileService {
       return tx.tutorProfile.findUniqueOrThrow({ where: { id: updated.id }, include: TUTOR_PROFILE_INCLUDE });
     });
 
-    return this.withOwnFields(profile);
+    return this.withPhotoUrl(profile);
   }
 
   async requestPhotoUpload(userId: string, dto: RequestPhotoUploadDto): Promise<{ uploadUrl: string }> {
@@ -114,12 +114,13 @@ export class TutorProfileService {
     return { uploadUrl };
   }
 
-  private async withOwnFields(profile: Parameters<typeof toPublicTutorProfileDto>[0] & { profilePhotoKey: string | null }): Promise<OwnTutorProfileDto> {
-    const profilePhotoUrl = profile.profilePhotoKey ? await this.storage.generateDownloadUrl(profile.profilePhotoKey) : null;
-    return { ...toPublicTutorProfileDto(profile), profilePhotoUrl };
+  private async withPhotoUrl(profile: Parameters<typeof toPublicTutorProfileDto>[0] & { profilePhotoKey: string | null }): Promise<PublicTutorProfileDto> {
+    const dto = toPublicTutorProfileDto(profile);
+    if (!profile.profilePhotoKey) return dto;
+    return { ...dto, profilePhotoUrl: await this.storage.generateDownloadUrl(profile.profilePhotoKey) };
   }
 
-  async replaceSubjects(userId: string, dto: ReplaceSubjectsDto): Promise<OwnTutorProfileDto> {
+  async replaceSubjects(userId: string, dto: ReplaceSubjectsDto): Promise<PublicTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
     await this.assertActiveIds('subject', dto.subjectIds);
 
@@ -133,7 +134,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceGrades(userId: string, dto: ReplaceGradesDto): Promise<OwnTutorProfileDto> {
+  async replaceGrades(userId: string, dto: ReplaceGradesDto): Promise<PublicTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
 
     await this.prisma.$transaction(async (tx) => {
@@ -146,7 +147,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceCurricula(userId: string, dto: ReplaceCurriculaDto): Promise<OwnTutorProfileDto> {
+  async replaceCurricula(userId: string, dto: ReplaceCurriculaDto): Promise<PublicTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
     await this.assertActiveIds('curriculum', dto.curriculumIds);
 
@@ -160,7 +161,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceLocations(userId: string, dto: ReplaceLocationsDto): Promise<OwnTutorProfileDto> {
+  async replaceLocations(userId: string, dto: ReplaceLocationsDto): Promise<PublicTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
 
     await this.prisma.$transaction(async (tx) => {
@@ -178,7 +179,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceAvailability(userId: string, dto: ReplaceAvailabilityDto): Promise<OwnTutorProfileDto> {
+  async replaceAvailability(userId: string, dto: ReplaceAvailabilityDto): Promise<PublicTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
     const slots = dto.slots.map((slot) => {
       const startMinute = this.toMinutes(slot.startTime);

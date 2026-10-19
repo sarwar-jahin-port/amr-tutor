@@ -297,7 +297,9 @@ export function AcademicStage({
               <Input id="academicYear" placeholder="e.g. 3rd year" {...register('academicYear')} />
             </Field>
           </div>
-          {university && <CertificateUploader record={university} onChanged={updateRecord} />}
+          {university && (
+            <CertificateUploader record={university} onChanged={updateRecord} label="Certificate or student ID" />
+          )}
         </fieldset>
       </div>
 

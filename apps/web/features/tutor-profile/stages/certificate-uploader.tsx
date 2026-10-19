@@ -35,10 +35,13 @@ export function CertificateUploader({
   record,
   onChanged,
   ensureRecord,
+  label = 'Certificate',
 }: {
   record: EducationRecord | undefined;
   onChanged: (updated: EducationRecord) => void;
   ensureRecord?: () => Promise<EducationRecord>;
+  /** Overrides the "Certificate" wording — e.g. "Certificate or student ID" for the University section, which can't rely on a certificate alone the way SSC/HSC can. */
+  label?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -74,9 +77,9 @@ export function CertificateUploader({
       await uploadCertificateFile(uploadUrl, file);
       onChanged({ ...activeRecord, hasCertificate: true, certificateFileName: file.name, isVerified: false });
       if (fileInputRef.current) fileInputRef.current.value = '';
-      toast({ title: 'Certificate uploaded', description: "It's private until an admin reviews it.", variant: 'success' });
+      toast({ title: `${label} uploaded`, description: "It's private until an admin reviews it.", variant: 'success' });
     } catch (error) {
-      toast({ title: "Couldn't upload certificate", description: errorMessage(error), variant: 'danger' });
+      toast({ title: `Couldn't upload ${label.toLowerCase()}`, description: errorMessage(error), variant: 'danger' });
     } finally {
       setIsUploading(false);
     }
@@ -98,7 +101,7 @@ export function CertificateUploader({
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-ink">Certificate (optional)</p>
+        <p className="text-sm font-medium text-ink">{label} (optional)</p>
         {record?.hasCertificate &&
           (record.isVerified ? (
             <Badge variant="success">

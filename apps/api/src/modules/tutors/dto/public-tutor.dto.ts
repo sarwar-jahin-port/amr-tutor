@@ -53,6 +53,16 @@ export interface PublicTutorProfileDto extends PublicTutorSummaryDto {
   feeCurrency: string;
 }
 
+/**
+ * The owner's own view adds a signed, short-lived URL for their profile
+ * photo — never part of the public/shared mapper above, since
+ * profilePhotoKey itself must stay private (generateDownloadUrl is called
+ * explicitly by TutorProfileService, not baked into toPublicTutorProfileDto).
+ */
+export interface OwnTutorProfileDto extends PublicTutorProfileDto {
+  profilePhotoUrl: string | null;
+}
+
 interface TutorProfileRow {
   id: string;
   fullName: string;

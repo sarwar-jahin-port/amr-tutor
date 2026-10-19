@@ -17,6 +17,13 @@ export function getMyVerifications(): Promise<VerificationRequestDetail[]> {
   return authedFetch('/verifications/me').then((res) => handleAuthed<VerificationRequestDetail[]>(res));
 }
 
+/** Requests verification using the SSC/HSC/University certificates already uploaded in the Academic background step — no re-upload needed. */
+export function createVerificationFromEducationCertificates(): Promise<VerificationRequestDetail> {
+  return authedFetch('/verifications/from-education', { method: 'POST' }).then((res) =>
+    handleAuthed<VerificationRequestDetail>(res),
+  );
+}
+
 export function getVerification(id: string): Promise<VerificationRequestDetail> {
   return authedFetch(`/verifications/${id}`).then((res) => handleAuthed<VerificationRequestDetail>(res));
 }

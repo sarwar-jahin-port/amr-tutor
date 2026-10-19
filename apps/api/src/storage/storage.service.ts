@@ -76,6 +76,14 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
         accessKeyId: this.config.getOrThrow<string>('EVIDENCE_S3_ACCESS_KEY_ID'),
         secretAccessKey: this.config.getOrThrow<string>('EVIDENCE_S3_SECRET_ACCESS_KEY'),
       },
+      // Newer SDK versions attach an x-amz-checksum-* header/query param to
+      // every request by default. For a presigned PUT that header is baked
+      // into the signature before the browser ever has the real file (see
+      // uploadCertificateFile/uploadEvidenceFile), so non-AWS S3-compatible
+      // endpoints that validate it strictly (e.g. Cloudflare R2) can reject
+      // the upload with a signature mismatch. Real S3 accepts this, so this
+      // is safe everywhere, not just for alternate providers.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
     });
   }
 

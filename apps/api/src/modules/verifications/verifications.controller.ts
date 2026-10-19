@@ -28,6 +28,15 @@ export class VerificationsController {
     return { data };
   }
 
+  @Post('from-education')
+  @HttpCode(HttpStatus.CREATED)
+  async createFromEducationCertificates(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ data: VerificationRequestDetailDto }> {
+    const data = await this.verificationsService.createFromEducationCertificates(user.id);
+    return { data };
+  }
+
   @Get('me')
   async listOwn(@CurrentUser() user: AuthenticatedUser): Promise<{ data: VerificationRequestDetailDto[] }> {
     const data = await this.verificationsService.listOwn(user.id);

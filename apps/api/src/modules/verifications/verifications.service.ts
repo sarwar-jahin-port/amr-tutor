@@ -56,6 +56,54 @@ export class VerificationsService {
     return toVerificationRequestDetailDto(request);
   }
 
+  /**
+   * Lets a tutor request verification using the SSC/HSC/University
+   * certificates they already uploaded during onboarding (see
+   * EducationRecordsService), instead of re-uploading the same documents
+   * through the standalone evidence-upload flow. Reuses `submit`'s
+   * independent upload/magic-byte validation rather than duplicating it.
+   */
+  async createFromEducationCertificates(userId: string): Promise<VerificationRequestDetailDto> {
+    const tutorProfile = await this.prisma.tutorProfile.findUnique({ where: { userId } });
+    if (!tutorProfile) {
+      throw new BadRequestException('Create your tutor profile before requesting verification.');
+    }
+
+    const certificates = await this.prisma.educationRecord.findMany({
+      where: { tutorProfileId: tutorProfile.id, certificateKey: { not: null } },
+    });
+    if (certificates.length === 0) {
+      throw new BadRequestException(
+        'Upload at least one certificate (SSC, HSC, or University) in your academic background before requesting verification.',
+      );
+    }
+
+    const existing = await this.prisma.verificationRequest.findFirst({
+      where: { tutorProfileId: tutorProfile.id, type: 'UNIVERSITY_AFFILIATION', status: { in: NON_TERMINAL_STATUSES } },
+    });
+    if (existing) {
+      throw new ConflictException('You already have an active verification request.');
+    }
+
+    const request = await this.prisma.verificationRequest.create({
+      data: {
+        tutorProfileId: tutorProfile.id,
+        type: 'UNIVERSITY_AFFILIATION',
+        evidence: {
+          create: certificates.map((c) => ({
+            type: c.level === 'UNIVERSITY' ? 'UNIVERSITY_DOCUMENT' : 'ACADEMIC_TRANSCRIPT',
+            storageKey: c.certificateKey!,
+            originalFileName: c.certificateFileName,
+            mimeType: c.certificateMimeType ?? 'application/octet-stream',
+            sizeBytes: c.certificateSizeBytes ?? 0,
+          })),
+        },
+      },
+    });
+
+    return this.submit(userId, request.id);
+  }
+
   async listOwn(userId: string): Promise<VerificationRequestDetailDto[]> {
     const tutorProfile = await this.prisma.tutorProfile.findUnique({ where: { userId } });
     if (!tutorProfile) return [];

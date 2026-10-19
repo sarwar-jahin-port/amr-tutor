@@ -56,3 +56,21 @@ export function replaceAvailability(slots: AvailabilitySlotInput[]): Promise<Tut
     (res) => handleAuthed<TutorProfile>(res),
   );
 }
+
+export async function requestProfilePhotoUpload(input: {
+  contentType: string;
+  fileSizeBytes: number;
+  originalFileName?: string;
+}): Promise<{ uploadUrl: string }> {
+  return authedFetch('/tutors/me/profile/photo-upload', { method: 'POST', body: JSON.stringify(input) }).then((res) =>
+    handleAuthed<{ uploadUrl: string }>(res),
+  );
+}
+
+/** PUTs directly to private object storage using the signed URL — the file never passes through our own API. */
+export async function uploadProfilePhotoFile(uploadUrl: string, file: File): Promise<void> {
+  const res = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+  if (!res.ok) {
+    throw new Error('The file failed to upload. Please try again.');
+  }
+}

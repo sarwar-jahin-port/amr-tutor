@@ -52,6 +52,8 @@ export interface TutorProfile extends TutorSummary {
   preferredFeeMin: number | null;
   preferredFeeMax: number | null;
   feeCurrency: string;
+  /** Only present on the owner's own view of their profile (see OwnTutorProfileDto on the API) — a signed, short-lived URL, not the raw storage key. */
+  profilePhotoUrl?: string | null;
 }
 
 export interface ListingSummary {

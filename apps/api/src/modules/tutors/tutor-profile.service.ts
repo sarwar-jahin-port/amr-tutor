@@ -1,85 +1,125 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { StorageService } from '../../storage/storage.service';
 import { CreateTutorProfileDto } from './dto/create-tutor-profile.dto';
 import { LocationInputDto, ReplaceLocationsDto } from './dto/replace-locations.dto';
 import { ReplaceAvailabilityDto } from './dto/replace-availability.dto';
 import { ReplaceCurriculaDto } from './dto/replace-curricula.dto';
 import { ReplaceGradesDto } from './dto/replace-grades.dto';
 import { ReplaceSubjectsDto } from './dto/replace-subjects.dto';
+import { RequestPhotoUploadDto } from './dto/request-photo-upload.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
-import { PublicTutorProfileDto, TUTOR_PROFILE_INCLUDE, toPublicTutorProfileDto } from './dto/public-tutor.dto';
+import { OwnTutorProfileDto, TUTOR_PROFILE_INCLUDE, toPublicTutorProfileDto } from './dto/public-tutor.dto';
 
 @Injectable()
 export class TutorProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
-  async create(userId: string, dto: CreateTutorProfileDto): Promise<PublicTutorProfileDto> {
+  async create(userId: string, dto: CreateTutorProfileDto): Promise<OwnTutorProfileDto> {
     const existing = await this.prisma.tutorProfile.findUnique({ where: { userId } });
     if (existing) {
       throw new ConflictException('A tutor profile already exists for this account.');
     }
 
-    await this.assertUniversityActive(dto.universityId);
+    const university = await this.assertUniversityActive(dto.universityId);
     this.assertFeeRangeValid(dto.preferredFeeMin, dto.preferredFeeMax);
 
-    const profile = await this.prisma.tutorProfile.create({
-      data: {
-        userId,
-        universityId: dto.universityId,
-        fullName: dto.fullName,
-        department: dto.department,
-        degreeProgram: dto.degreeProgram,
-        academicStatus: dto.academicStatus,
-        academicYear: dto.academicYear,
-        introduction: dto.introduction,
-        preferredFeeMin: dto.preferredFeeMin,
-        preferredFeeMax: dto.preferredFeeMax,
-        isAvailable: dto.isAvailable ?? true,
-      },
-      include: TUTOR_PROFILE_INCLUDE,
+    const profile = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.tutorProfile.create({
+        data: {
+          userId,
+          universityId: dto.universityId,
+          fullName: dto.fullName,
+          department: dto.department,
+          degreeProgram: dto.degreeProgram,
+          academicStatus: dto.academicStatus,
+          academicYear: dto.academicYear,
+          introduction: dto.introduction,
+          preferredFeeMin: dto.preferredFeeMin,
+          preferredFeeMax: dto.preferredFeeMax,
+          isAvailable: dto.isAvailable ?? true,
+        },
+      });
+
+      // The University leg of the SSC -> HSC -> University education
+      // hierarchy is derived from the profile's own university field rather
+      // than entered separately, so it stays in sync by construction and
+      // still gets its own certificate-upload + verified-badge slot.
+      await tx.educationRecord.create({
+        data: { tutorProfileId: created.id, level: 'UNIVERSITY', institution: university.name },
+      });
+
+      return tx.tutorProfile.findUniqueOrThrow({ where: { id: created.id }, include: TUTOR_PROFILE_INCLUDE });
     });
 
-    return toPublicTutorProfileDto(profile);
+    return this.withOwnFields(profile);
   }
 
-  async getOwn(userId: string): Promise<PublicTutorProfileDto> {
+  async getOwn(userId: string): Promise<OwnTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
-    return toPublicTutorProfileDto(profile);
+    return this.withOwnFields(profile);
   }
 
-  async update(userId: string, dto: UpdateTutorProfileDto): Promise<PublicTutorProfileDto> {
+  async update(userId: string, dto: UpdateTutorProfileDto): Promise<OwnTutorProfileDto> {
     const existing = await this.findOwnedOrThrow(userId);
 
-    if (dto.universityId) {
-      await this.assertUniversityActive(dto.universityId);
-    }
+    const university = dto.universityId ? await this.assertUniversityActive(dto.universityId) : undefined;
 
     this.assertFeeRangeValid(
       dto.preferredFeeMin ?? existing.preferredFeeMin ?? undefined,
       dto.preferredFeeMax ?? existing.preferredFeeMax ?? undefined,
     );
 
-    const profile = await this.prisma.tutorProfile.update({
-      where: { userId },
-      data: {
-        universityId: dto.universityId,
-        fullName: dto.fullName,
-        department: dto.department,
-        degreeProgram: dto.degreeProgram,
-        academicStatus: dto.academicStatus,
-        academicYear: dto.academicYear,
-        introduction: dto.introduction,
-        preferredFeeMin: dto.preferredFeeMin,
-        preferredFeeMax: dto.preferredFeeMax,
-        isAvailable: dto.isAvailable,
-      },
-      include: TUTOR_PROFILE_INCLUDE,
+    const profile = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.tutorProfile.update({
+        where: { userId },
+        data: {
+          universityId: dto.universityId,
+          fullName: dto.fullName,
+          department: dto.department,
+          degreeProgram: dto.degreeProgram,
+          academicStatus: dto.academicStatus,
+          academicYear: dto.academicYear,
+          introduction: dto.introduction,
+          preferredFeeMin: dto.preferredFeeMin,
+          preferredFeeMax: dto.preferredFeeMax,
+          isAvailable: dto.isAvailable,
+        },
+      });
+
+      if (university) {
+        await tx.educationRecord.upsert({
+          where: { tutorProfileId_level: { tutorProfileId: updated.id, level: 'UNIVERSITY' } },
+          create: { tutorProfileId: updated.id, level: 'UNIVERSITY', institution: university.name },
+          update: { institution: university.name },
+        });
+      }
+
+      return tx.tutorProfile.findUniqueOrThrow({ where: { id: updated.id }, include: TUTOR_PROFILE_INCLUDE });
     });
 
-    return toPublicTutorProfileDto(profile);
+    return this.withOwnFields(profile);
   }
 
-  async replaceSubjects(userId: string, dto: ReplaceSubjectsDto): Promise<PublicTutorProfileDto> {
+  async requestPhotoUpload(userId: string, dto: RequestPhotoUploadDto): Promise<{ uploadUrl: string }> {
+    const profile = await this.findOwnedOrThrow(userId);
+
+    const key = this.storage.generateObjectKey(`profile-photo/${profile.id}`, dto.originalFileName);
+    await this.prisma.tutorProfile.update({ where: { id: profile.id }, data: { profilePhotoKey: key } });
+
+    const uploadUrl = await this.storage.generateUploadUrl(key, dto.contentType);
+    return { uploadUrl };
+  }
+
+  private async withOwnFields(profile: Parameters<typeof toPublicTutorProfileDto>[0] & { profilePhotoKey: string | null }): Promise<OwnTutorProfileDto> {
+    const profilePhotoUrl = profile.profilePhotoKey ? await this.storage.generateDownloadUrl(profile.profilePhotoKey) : null;
+    return { ...toPublicTutorProfileDto(profile), profilePhotoUrl };
+  }
+
+  async replaceSubjects(userId: string, dto: ReplaceSubjectsDto): Promise<OwnTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
     await this.assertActiveIds('subject', dto.subjectIds);
 
@@ -93,7 +133,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceGrades(userId: string, dto: ReplaceGradesDto): Promise<PublicTutorProfileDto> {
+  async replaceGrades(userId: string, dto: ReplaceGradesDto): Promise<OwnTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
 
     await this.prisma.$transaction(async (tx) => {
@@ -106,7 +146,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceCurricula(userId: string, dto: ReplaceCurriculaDto): Promise<PublicTutorProfileDto> {
+  async replaceCurricula(userId: string, dto: ReplaceCurriculaDto): Promise<OwnTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
     await this.assertActiveIds('curriculum', dto.curriculumIds);
 
@@ -120,7 +160,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceLocations(userId: string, dto: ReplaceLocationsDto): Promise<PublicTutorProfileDto> {
+  async replaceLocations(userId: string, dto: ReplaceLocationsDto): Promise<OwnTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
 
     await this.prisma.$transaction(async (tx) => {
@@ -138,7 +178,7 @@ export class TutorProfileService {
     return this.getOwn(userId);
   }
 
-  async replaceAvailability(userId: string, dto: ReplaceAvailabilityDto): Promise<PublicTutorProfileDto> {
+  async replaceAvailability(userId: string, dto: ReplaceAvailabilityDto): Promise<OwnTutorProfileDto> {
     const profile = await this.findOwnedOrThrow(userId);
     const slots = dto.slots.map((slot) => {
       const startMinute = this.toMinutes(slot.startTime);
@@ -172,13 +212,14 @@ export class TutorProfileService {
     return profile;
   }
 
-  private async assertUniversityActive(universityId: string): Promise<void> {
+  private async assertUniversityActive(universityId: string): Promise<{ id: string; name: string }> {
     const university = await this.prisma.university.findFirst({
       where: { id: universityId, isActive: true },
     });
     if (!university) {
       throw new BadRequestException('universityId must reference an active university.');
     }
+    return university;
   }
 
   private async assertActiveIds(model: 'subject' | 'curriculum', ids: string[]): Promise<void> {

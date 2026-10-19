@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn';
 
-/** No profile photos exist in the data model yet, so tutors get a deterministic initials avatar. */
+/** Tutors without an uploaded profile photo get a deterministic initials avatar instead. */
 const PALETTE = [
   { bg: 'bg-primary/10', text: 'text-primary' },
   { bg: 'bg-warm-accent/15', text: 'text-[#8a5a24]' },
@@ -14,10 +14,23 @@ function paletteFor(seed: string) {
 
 export interface AvatarProps {
   name: string;
+  /** A signed photo URL (e.g. TutorProfile.profilePhotoUrl). Falls back to initials when absent. */
+  photoUrl?: string | null;
   className?: string;
 }
 
-export function Avatar({ name, className }: AvatarProps) {
+export function Avatar({ name, photoUrl, className }: AvatarProps) {
+  if (photoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- short-lived signed URL, not worth Next's remote-image config for this
+      <img
+        src={photoUrl}
+        alt=""
+        className={cn('inline-block shrink-0 rounded-full object-cover', className)}
+      />
+    );
+  }
+
   const initials = name
     .trim()
     .split(/\s+/)

@@ -37,6 +37,12 @@ enum AcademicStatus {
   OTHER
 }
 
+enum EducationLevel {
+  SSC
+  HSC
+  UNIVERSITY
+}
+
 enum TeachingMode {
   HOME
   ONLINE
@@ -206,7 +212,9 @@ model User {
   @@index([createdAt])
 }
 
-/** Free-text support-case notes an admin leaves on an account — never shown to the account owner. */
+/**
+ * Free-text support-case notes an admin leaves on an account — never shown to the account owner.
+ */
 model AdminNote {
   id           String @id @default(uuid()) @db.Uuid
   targetUserId String @db.Uuid
@@ -276,7 +284,9 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
-/** Links a user to a social-login identity (e.g. Google). One row per provider per user. */
+/**
+ * Links a user to a social-login identity (e.g. Google). One row per provider per user.
+ */
 model OAuthAccount {
   id                String        @id @default(uuid()) @db.Uuid
   userId            String        @db.Uuid
@@ -291,7 +301,9 @@ model OAuthAccount {
   @@index([userId])
 }
 
-/** Single-use, hashed token emailed to a user to confirm ownership of their address. */
+/**
+ * Single-use, hashed token emailed to a user to confirm ownership of their address.
+ */
 model EmailVerificationToken {
   id        String @id @default(uuid()) @db.Uuid
   userId    String @db.Uuid
@@ -391,10 +403,42 @@ model TutorProfile {
 
   verificationRequests VerificationRequest[]
   applications         Application[]
+  educationRecords     EducationRecord[]
 
   @@index([universityId])
   @@index([isAvailable])
   @@index([academicStatus])
+}
+
+/**
+ * One row per academic level (SSC, HSC, University) for a tutor. The
+ * sequential hierarchy (SSC before HSC before University) is enforced in the
+ * application layer, not the schema. Each level can carry its own optional
+ * certificate upload and an independent admin-set verified flag, so the UI
+ * can show a verified badge per level rather than one flag for the whole
+ * profile.
+ */
+model EducationRecord {
+  id             String         @id @default(uuid()) @db.Uuid
+  tutorProfileId String         @db.Uuid
+  level          EducationLevel
+
+  institution String
+  gpa         String?
+
+  certificateKey       String?
+  certificateFileName  String?
+  certificateMimeType  String?
+  certificateSizeBytes Int?
+
+  isVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tutorProfile TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([tutorProfileId, level])
 }
 
 model TutorSubject {

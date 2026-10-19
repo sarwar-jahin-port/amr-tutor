@@ -20,14 +20,15 @@ export const TUTOR_PROFILE_INCLUDE = {
 } satisfies Prisma.TutorProfileInclude;
 
 /**
- * Public-safe tutor shapes. Deliberately excludes userId, profilePhotoKey
- * (a private storage key, not a servable URL yet), and any raw
- * verification record — never serialize a raw Prisma TutorProfile
- * (blueprint Phase 5: "Never expose ... in public tutor search" / "Return
- * only public response DTOs"). The owner's own view (Phase 6) reuses the
- * same shape — there is no extra private field on TutorProfile itself
- * (contact info lives on User), so what's safe to show the public is also
- * everything there is to show the owner.
+ * Public-safe tutor shapes. Deliberately excludes userId, the raw
+ * profilePhotoKey storage key (only a signed, short-lived download URL is
+ * ever exposed, via profilePhotoUrl), and any raw verification record —
+ * never serialize a raw Prisma TutorProfile (blueprint Phase 5: "Never
+ * expose ... in public tutor search" / "Return only public response
+ * DTOs"). The owner's own view (Phase 6) reuses the same shape — there is
+ * no extra private field on TutorProfile itself (contact info lives on
+ * User), so what's safe to show the public is also everything there is to
+ * show the owner.
  */
 export interface PublicTutorSummaryDto {
   id: string;
@@ -38,6 +39,14 @@ export interface PublicTutorSummaryDto {
   grades: string[];
   /** APPROVED and not expired (blueprint Phase 10: "only display a verified badge if ... approved and still valid"). */
   isVerified: boolean;
+  /**
+   * A signed, short-lived URL, never the raw storage key — this mapper
+   * always sets it to null; the caller (TutorsService/TutorProfileService)
+   * overwrites it with a real signed URL once profilePhotoKey is read,
+   * since generating that URL is an async call to StorageService that a
+   * plain mapping function shouldn't make itself.
+   */
+  profilePhotoUrl: string | null;
 }
 
 export interface PublicTutorProfileDto extends PublicTutorSummaryDto {
@@ -53,16 +62,6 @@ export interface PublicTutorProfileDto extends PublicTutorSummaryDto {
   feeCurrency: string;
 }
 
-/**
- * The owner's own view adds a signed, short-lived URL for their profile
- * photo — never part of the public/shared mapper above, since
- * profilePhotoKey itself must stay private (generateDownloadUrl is called
- * explicitly by TutorProfileService, not baked into toPublicTutorProfileDto).
- */
-export interface OwnTutorProfileDto extends PublicTutorProfileDto {
-  profilePhotoUrl: string | null;
-}
-
 interface TutorProfileRow {
   id: string;
   fullName: string;
@@ -74,6 +73,7 @@ interface TutorProfileRow {
   preferredFeeMin: number | null;
   preferredFeeMax: number | null;
   feeCurrency: string;
+  profilePhotoKey: string | null;
   university: { id: string; name: string };
   subjects: { subject: { id: string; name: string } }[];
   grades: { gradeLevel: string }[];
@@ -97,6 +97,7 @@ export function toPublicTutorSummaryDto(row: TutorProfileRow): PublicTutorSummar
     subjects: row.subjects.map((s) => s.subject),
     grades: row.grades.map((g) => g.gradeLevel),
     isVerified: computeIsVerified(row.verificationRequests),
+    profilePhotoUrl: null,
   };
 }
 

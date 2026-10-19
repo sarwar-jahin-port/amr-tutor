@@ -20,6 +20,7 @@ export function TutorSpotlightRow({ tutor }: { tutor: TutorSummary }) {
     >
       <Avatar
         name={tutor.fullName}
+        photoUrl={tutor.profilePhotoUrl}
         className="size-11 shrink-0 text-sm transition-transform duration-base group-hover:scale-105"
       />
 

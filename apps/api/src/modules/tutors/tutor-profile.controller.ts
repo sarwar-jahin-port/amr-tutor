@@ -4,7 +4,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { CreateTutorProfileDto } from './dto/create-tutor-profile.dto';
-import { OwnTutorProfileDto } from './dto/public-tutor.dto';
+import { PublicTutorProfileDto } from './dto/public-tutor.dto';
 import { ReplaceAvailabilityDto } from './dto/replace-availability.dto';
 import { ReplaceCurriculaDto } from './dto/replace-curricula.dto';
 import { ReplaceGradesDto } from './dto/replace-grades.dto';
@@ -29,13 +29,13 @@ export class TutorProfileController {
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateTutorProfileDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.create(user.id, dto);
     return { data };
   }
 
   @Get('profile')
-  async getOwn(@CurrentUser() user: AuthenticatedUser): Promise<{ data: OwnTutorProfileDto }> {
+  async getOwn(@CurrentUser() user: AuthenticatedUser): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.getOwn(user.id);
     return { data };
   }
@@ -44,7 +44,7 @@ export class TutorProfileController {
   async update(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateTutorProfileDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.update(user.id, dto);
     return { data };
   }
@@ -53,7 +53,7 @@ export class TutorProfileController {
   async replaceSubjects(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReplaceSubjectsDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.replaceSubjects(user.id, dto);
     return { data };
   }
@@ -62,7 +62,7 @@ export class TutorProfileController {
   async replaceGrades(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReplaceGradesDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.replaceGrades(user.id, dto);
     return { data };
   }
@@ -71,7 +71,7 @@ export class TutorProfileController {
   async replaceCurricula(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReplaceCurriculaDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.replaceCurricula(user.id, dto);
     return { data };
   }
@@ -80,7 +80,7 @@ export class TutorProfileController {
   async replaceLocations(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReplaceLocationsDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.replaceLocations(user.id, dto);
     return { data };
   }
@@ -89,7 +89,7 @@ export class TutorProfileController {
   async replaceAvailability(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReplaceAvailabilityDto,
-  ): Promise<{ data: OwnTutorProfileDto }> {
+  ): Promise<{ data: PublicTutorProfileDto }> {
     const data = await this.tutorProfileService.replaceAvailability(user.id, dto);
     return { data };
   }

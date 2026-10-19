@@ -36,6 +36,7 @@ export function TutorProfileCard({ tutor }: { tutor: TutorProfile }) {
       <div className="relative flex items-start gap-3">
         <Avatar
           name={tutor.fullName}
+          photoUrl={tutor.profilePhotoUrl}
           className="size-12 shrink-0 text-base transition-transform duration-base group-hover:scale-105"
         />
         <div className="flex min-w-0 flex-col gap-1">

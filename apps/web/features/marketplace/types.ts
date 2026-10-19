@@ -39,6 +39,8 @@ export interface TutorSummary {
   subjects: ReferenceItem[];
   grades: string[];
   isVerified: boolean;
+  /** A signed, short-lived URL, not the raw storage key — present on every tutor view, public or the owner's own. */
+  profilePhotoUrl: string | null;
 }
 
 export interface TutorProfile extends TutorSummary {
@@ -52,8 +54,6 @@ export interface TutorProfile extends TutorSummary {
   preferredFeeMin: number | null;
   preferredFeeMax: number | null;
   feeCurrency: string;
-  /** Only present on the owner's own view of their profile (see OwnTutorProfileDto on the API) — a signed, short-lived URL, not the raw storage key. */
-  profilePhotoUrl?: string | null;
 }
 
 export interface ListingSummary {
